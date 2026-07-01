@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://cxsavnb7fgs4v"]
+
+[ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_30i2m"]
+[ext_resource type="Script" uid="uid://cxvu6hwxvirqs" path="res://scripts/route_display.gd" id="2_cnlx2"]
+
+[node name="ScheduleList" type="PanelContainer" unique_id=765042475]
+custom_minimum_size = Vector2(250, 0)
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = -852.0
+offset_bottom = 53.0
+grow_horizontal = 2
+mouse_filter = 1
+theme_override_styles/panel = ExtResource("1_30i2m")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1772455806]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=292287275]
+layout_mode = 2
+text = "Available schedules:"
+
+[node name="List" type="HFlowContainer" parent="MarginContainer/VBoxContainer" unique_id=583580462]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Current" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=368937025]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/Current" unique_id=1506633981]
+layout_mode = 2
+text = "Current schedule:"
+
+[node name="CurrentRoute" type="HFlowContainer" parent="MarginContainer/VBoxContainer/Current" unique_id=1442226694]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_cnlx2")
+metadata/_custom_type_script = "uid://cxvu6hwxvirqs"

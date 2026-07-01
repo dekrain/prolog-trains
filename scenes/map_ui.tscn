@@ -1,0 +1,144 @@
+[gd_scene format=3 uid="uid://dhb6fjo20axxk"]
+
+[ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_s7dfd"]
+[ext_resource type="Script" uid="uid://bccnx7tf2g6qm" path="res://scripts/edtor_icon.gd" id="1_y66w3"]
+
+[sub_resource type="Texture2D" id="Texture2D_s7dfd"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"ToolMove"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_y66w3"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"Object"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_heq8q"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"MeshItem"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_c82kb"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"GraphEdit"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_1hrs5"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"AnimationTrackGroup"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_5sdtq"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"NavigationAgent2D"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_uy5ib"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"Remove"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_e5pp1"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"Save"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[sub_resource type="Texture2D" id="Texture2D_rr50l"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("1_y66w3")
+icon = &"Load"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[node name="MapUI" type="PanelContainer" unique_id=1023053093]
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = -942.0
+offset_bottom = 53.0
+grow_horizontal = 2
+size_flags_vertical = 0
+mouse_filter = 1
+theme_override_styles/panel = ExtResource("1_s7dfd")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1099123048]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1404178033]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1670103812]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=232569500]
+layout_mode = 2
+text = "Bounds"
+
+[node name="Bounds" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=180008677]
+unique_name_in_owner = true
+layout_mode = 2
+text = "L: # T: # R: # B: #"
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1770553692]
+layout_mode = 2
+text = "Tools:"
+
+[node name="Tools" type="ItemList" parent="MarginContainer/VBoxContainer" unique_id=1467075805]
+unique_name_in_owner = true
+layout_mode = 2
+auto_width = true
+auto_height = true
+item_count = 7
+item_0/text = "Pan view"
+item_0/icon = SubResource("Texture2D_s7dfd")
+item_1/text = "Select"
+item_1/icon = SubResource("Texture2D_y66w3")
+item_2/text = "Add station"
+item_2/icon = SubResource("Texture2D_heq8q")
+item_3/text = "Connect stations"
+item_3/icon = SubResource("Texture2D_c82kb")
+item_4/text = "Set schedule"
+item_4/icon = SubResource("Texture2D_1hrs5")
+item_5/text = "Plan route"
+item_5/icon = SubResource("Texture2D_5sdtq")
+item_6/text = "Remove"
+item_6/icon = SubResource("Texture2D_uy5ib")
+
+[node name="Control" type="Control" parent="MarginContainer/VBoxContainer" unique_id=123176466]
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=459325564]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=2097002117]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Save"
+icon = SubResource("Texture2D_e5pp1")
+
+[node name="Load" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=707056908]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Reload"
+icon = SubResource("Texture2D_rr50l")

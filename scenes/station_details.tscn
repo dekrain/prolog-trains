@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://tgusvcugentj"]
+
+[ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_1ikky"]
+[ext_resource type="LabelSettings" uid="uid://c6bkqce8bld3w" path="res://resources/station_name.tres" id="2_kxw4v"]
+
+[node name="StationDetails" type="PanelContainer" unique_id=765042475]
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = -852.0
+offset_bottom = 53.0
+grow_horizontal = 2
+mouse_filter = 1
+theme_override_styles/panel = ExtResource("1_1ikky")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1772455806]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=2045739081]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1220740821]
+layout_mode = 2
+text = "Name:"
+
+[node name="Name" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=98699685]
+unique_name_in_owner = true
+layout_mode = 2
+label_settings = ExtResource("2_kxw4v")
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=292287275]
+layout_mode = 2
+text = "Schedule:"

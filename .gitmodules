@@ -1,0 +1,6 @@
+[submodule "godot-cpp"]
+	path = godot-cpp
+	url = https://github.com/godotengine/godot-cpp.git
+[submodule "Prologot"]
+	path = Prologot
+	url = https://github.com/Lecrapouille/Prologot.git

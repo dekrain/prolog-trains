@@ -1,0 +1,35 @@
+diff --git a/.gdignore b/.gdignore
+new file mode 100644
+index 0000000..e69de29
+diff --git a/godot-cpp-current b/godot-cpp-current
+new file mode 120000
+index 0000000..8175f7c
+--- /dev/null
++++ b/godot-cpp-current
+@@ -0,0 +1 @@
++../godot-cpp
+\ No newline at end of file
+diff --git a/src/Prologot.cpp b/src/Prologot.cpp
+index 30c7345..e5c9684 100644
+--- a/src/Prologot.cpp
++++ b/src/Prologot.cpp
+@@ -9,6 +9,7 @@
+ 
+ #include "Prologot.hpp"
+ #include <cstring>
++#include <clocale>
+ #include <string>
+ #include <vector>
+ #ifdef _WIN32
+@@ -307,7 +308,10 @@ bool Prologot::initialize(Dictionary const& p_options)
+     argv_list.push_back(nullptr);
+ 
+     // Initialize Prolog engine
+-    if (!PL_initialise(argv_list.size() - 1, (char**)argv_list.data()))
++    auto result = PL_initialise(argv_list.size() - 1, (char**)argv_list.data());
++    // Reset locale because SWI-Prolog changes it
++    setlocale(LC_NUMERIC, "C");
++    if (!result)
+     {
+         if (!handle_prolog_exception(0, "PL_initialise"))
+         {
