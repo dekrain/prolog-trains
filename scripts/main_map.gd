@@ -27,6 +27,7 @@ var _current_tool := Tool.PAN
 func _ready():
 	pl.initialize()
 	_pl_writer = preload('res://scripts/prolog_writer.gd').new(pl)
+	_sched_ed.pl = pl
 	view.local_transform_changed.connect(_view_changed)
 	get_viewport().size_changed.connect(_view_changed)
 	_tools.select(0)
@@ -92,6 +93,18 @@ func save_map():
 	qres = pl.query_all('schedule_route', ['N', 'P'])
 	for fact in qres:
 		writer.term('schedule_route', fact['N'], fact['P'])
+	writer.blank_line()
+	writer.comment('schedule_timings(name, RoadDeltas)')
+	writer.directive('dynamic schedule_timings/2')
+	qres = pl.query_all('schedule_timings', ['N', 'R'])
+	for fact in qres:
+		writer.term('schedule_timings', fact['N'], fact['R'])
+	writer.blank_line()
+	writer.comment('schedule_run(name, From, To, StartTime)')
+	writer.directive('dynamic schedule_run/4')
+	qres = pl.query_all('schedule_run', ['N', 'S', 'E', 'T'])
+	for fact in qres:
+		writer.term('schedule_run', fact['N'], fact['S'], fact['E'], fact['T'])
 
 func load_map():
 	assert(pl.query('reload_db'))
@@ -113,6 +126,8 @@ func load_map():
 		_add_object(obj)
 
 func _unhandled_input(event):
+	if _overlay.visible:
+		return
 	var mb := event as InputEventMouseButton
 	if mb != null:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
@@ -161,6 +176,9 @@ func _unhandled_input(event):
 			zoom_view_by(ZOOM_SENS, mb.position)
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			zoom_view_by(1.0 / ZOOM_SENS, mb.position)
+		elif mb.button_index == MOUSE_BUTTON_MIDDLE:
+			# Pan view regardless of view
+			_dragging = mb.pressed
 		return
 	var mm := event as InputEventMouseMotion
 	if mm != null:
@@ -233,6 +251,7 @@ func select_object(obj: MapObject):
 		obj.set_state(MapObject.STATE_SELECTED, true)
 		if obj is Station:
 			$StationDetails/%Name.text = obj.name
+			$StationDetails/%XY.text = 'X: %.3f Y: %.3f' % [obj.position.x, obj.position.y]
 			$StationDetails.show()
 		elif obj is Road:
 			var road := obj as Road
@@ -306,6 +325,16 @@ func _refresh_schedules():
 		btn.pressed.connect(edit_schedule.bind(sched))
 		$ScheduleList/%List.add_child(btn)
 
-func _overlay_clicked():
+func close_overlay():
 	_overlay.hide()
 	_sched_ed.hide()
+	if _sched_ed.schedule != null:
+		_sched_ed.schedule.remove_from_db(pl)
+		_sched_ed.schedule.save_to_db(_pl_writer)
+
+func _remove_schedule():
+	_sched_ed.schedule.remove_from_db(pl)
+	_sched_ed.edit(null)
+	close_overlay()
+	if $ScheduleList.visible:
+		_refresh_schedules()

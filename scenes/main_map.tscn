@@ -93,4 +93,5 @@ offset_bottom = 47.5
 grow_vertical = 2
 
 [connection signal="local_transform_changed" from="View" to="BG" method="queue_redraw"]
-[connection signal="clicked" from="Overlay" to="." method="_overlay_clicked"]
+[connection signal="clicked" from="Overlay" to="." method="close_overlay"]
+[connection signal="remove" from="ScheduleEditor" to="." method="_remove_schedule"]

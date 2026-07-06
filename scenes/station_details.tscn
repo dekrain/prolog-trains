@@ -34,6 +34,11 @@ unique_name_in_owner = true
 layout_mode = 2
 label_settings = ExtResource("2_kxw4v")
 
+[node name="XY" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1711504260]
+unique_name_in_owner = true
+layout_mode = 2
+text = "X: # Y: #"
+
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=292287275]
 layout_mode = 2
 text = "Schedule:"

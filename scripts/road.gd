@@ -76,8 +76,8 @@ func load_from_db(pl: Prologot):
 	quality = res['args'][2]
 
 func remove_from_db(pl: Prologot) -> bool:
-	#if pl.query('route', [from, to]):
-		#return false
+	if pl.query('road_part_of_schedule', [from.name, to.name]):
+		return false
 	from._roads.erase(self)
 	to._roads.erase(self)
 	pl.retract_all('road(%s, %s, _)' % [from.name, to.name])

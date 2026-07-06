@@ -1,0 +1,38 @@
+[gd_resource type="Theme" format=3 uid="uid://05rb2yc2ox4x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cviax"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.28117675, 0.25334173, 0.23391515, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yl303"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.5104901, 0.47203618, 0.44134438, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fgeqy"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.116611354, 0.11661137, 0.116611354, 1)
+
+[resource]
+GridCell/base_type = &"Panel"
+GridCell/styles/panel = SubResource("StyleBoxFlat_cviax")
+GridCellHighlight/base_type = &"Panel"
+GridCellHighlight/styles/panel = SubResource("StyleBoxFlat_yl303")
+GridPanel/base_type = &"Panel"
+GridPanel/styles/panel = SubResource("StyleBoxFlat_fgeqy")

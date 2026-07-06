@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://dboyafb6wn6tt"]
+
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_fa3ta"]
+
+[node name="TestGrid" type="PanelContainer" unique_id=391868148]
+offset_right = 40.0
+offset_bottom = 40.0
+theme = ExtResource("1_fa3ta")
+theme_type_variation = &"GridPanel"
+
+[node name="GridContainer" type="GridContainer" parent="." unique_id=502759542]
+layout_mode = 2
+columns = 2
+
+[node name="PanelContainerA" type="PanelContainer" parent="GridContainer" unique_id=272648429]
+layout_mode = 2
+theme_type_variation = &"GridCell"
+
+[node name="Label" type="Label" parent="GridContainer/PanelContainerA" unique_id=1798581530]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 1
+text = "Cell A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PanelContainerB" type="PanelContainer" parent="GridContainer" unique_id=1724542496]
+layout_mode = 2
+theme_type_variation = &"GridCell"
+
+[node name="Label" type="Label" parent="GridContainer/PanelContainerB" unique_id=961010791]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 1
+text = "Cell B"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PanelContainerC" type="PanelContainer" parent="GridContainer" unique_id=41940806]
+layout_mode = 2
+theme_type_variation = &"GridCell"
+
+[node name="Label" type="Label" parent="GridContainer/PanelContainerC" unique_id=2096767623]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 1
+text = "Cell C"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PanelContainerD" type="PanelContainer" parent="GridContainer" unique_id=1549255324]
+layout_mode = 2
+theme_type_variation = &"GridCell"
+
+[node name="Label" type="Label" parent="GridContainer/PanelContainerD" unique_id=891382360]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 1
+text = "Cell D"
+horizontal_alignment = 1
+vertical_alignment = 1
