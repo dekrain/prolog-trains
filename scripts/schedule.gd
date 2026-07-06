@@ -42,9 +42,9 @@ func load(pl: Prologot, map: MapView):
 	forward_plans.clear()
 	reverse_plans.clear()
 	for run in res:
-		var from: String = res['From']
-		var to: String = res['To']
-		var time: int = res['Time']
+		var from: String = run['args'][1]
+		var to: String = run['args'][2]
+		var time: int = run['args'][3]
 		if from == path_names[0] and to == path_names[-1]:
 			forward_plans.push_back(time)
 		elif from == path_names[-1] and to == path_names[0]:

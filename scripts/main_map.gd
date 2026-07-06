@@ -124,6 +124,8 @@ func load_map():
 		obj.attach(from, to)
 		obj.load_from_db(pl)
 		_add_object(obj)
+	if $ScheduleList.visible:
+		_refresh_schedules()
 
 func _unhandled_input(event):
 	if _overlay.visible:

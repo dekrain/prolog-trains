@@ -12,6 +12,8 @@ reload_db :-
 	abolish(road/3),
 	abolish(schedule/1),
 	abolish(schedule_route/2),
+	abolish(schedule_timings/2),
+	abolish(schedule_run/4),
 	!,
 	consult(db).
 
