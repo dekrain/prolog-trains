@@ -21,11 +21,7 @@ reload_db :-
 road_part_of_schedule(From, To) :-
 	road_between(From, To),
 	schedule_route(_, R),
-	route_has_bidi(R, From, To).
-
-route_has_bidi([A, B | _], A, B).
-route_has_bidi([B, A | _], A, B).
-route_has_bidi([_ | R], A, B) :- route_has_bidi(R, A, B).
+	(nextto(From, To, R) ; nextto(To, From, R)).
 
 %! compute_route_timings(+Schedule, -Timings)
 compute_route_timings(Schedule, Timings) :-
@@ -49,3 +45,52 @@ compute_route_segment_timing(From, To, Time) :-
 	Dy is abs(Y1 - Y0),
 	Dist is sqrt(Dx*Dx + Dy*Dy),
 	Time is 2**(1.0 - Q) * Dist * 0.1.
+
+
+%! schedule_for_station(+Station, -Schedule, -Index) is nondet.
+%! schedule_for_station(-Station, +Schedule, +Index) is semidet.
+schedule_for_station(Station, Schedule, Index) :-
+	schedule_route(Schedule, Route),
+	nth0(Index, Route, Station).
+
+%! station_stop(+Station, -Schedule, -Time, -Reverse) is semidet.
+station_stop(Station, Schedule, Time, Reverse) :-
+	schedule_for_station(Station, Schedule, Index),
+	schedule_timings(Schedule, Timings),
+	schedule_run(Schedule, S, E, Offset),
+	schedule_endpoints(Schedule, S, E, Reverse),
+	% !,
+	accumulate_timings(Timings, Offset, Index, Reverse, Time).
+
+schedule_endpoints(Schedule, Start, End, Reverse) :-
+	schedule_route(Schedule, Route),
+	route_endpoints(Route, Start, End, Reverse).
+
+route_endpoints(Route, Start, End, 0) :-
+	nth0(0, Route, Start),
+	last(Route, End).
+route_endpoints(Route, Start, End, 1) :-
+	nth0(0, Route, End),
+	last(Route, Start).
+
+accumulate_timings(Timings, Offset, Index, 0, Sum) :-
+	sum_prefix(Timings, Offset, Index, Sum).
+
+accumulate_timings(Timings, Offset, Index, 1, Sum) :-
+	sum_suffix(Timings, Offset, Index, Sum).
+
+sum_prefix(_, Acc, 0, Acc).
+sum_prefix([H|T], Acc, Count, Sum) :-
+	Cnext is Count - 1,
+	Anext is Acc + H,
+	!,
+	sum_prefix(T, Anext, Cnext, Sum).
+
+sum_suffix(Timings, Offset, Index, Sum) :-
+	list_skip(Timings, Index, Slice),
+	lists:sum_list(Slice, Offset, Sum).
+
+list_skip(L, 0, L).
+list_skip([_|T], N, S) :-
+	D is N - 1,
+	list_skip(T, D, S).

@@ -80,7 +80,7 @@ text = "Remove"
 icon = SubResource("Texture2D_5vgq5")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=1889501778]
-custom_minimum_size = Vector2(201, 127)
+custom_minimum_size = Vector2(255, 143)
 layout_mode = 2
 follow_focus = true
 horizontal_scroll_mode = 0
@@ -113,11 +113,24 @@ theme_type_variation = &"GridPanel"
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ForwardPath" type="HFlowContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=53550644]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=965059577]
+layout_mode = 2
+
+[node name="ForwardPath" type="HFlowContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer" unique_id=53550644]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 script = ExtResource("6_2v3f8")
 metadata/_custom_type_script = "uid://cxvu6hwxvirqs"
+
+[node name="RemoveLastForward" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer" unique_id=333356979]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/icon_normal_color = Color(1, 0.38, 0.38, 1)
+text = "Remove last plan"
+icon = SubResource("Texture2D_5vgq5")
 
 [node name="PanelContainer2" type="PanelContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=1545269211]
 layout_mode = 2
@@ -127,11 +140,24 @@ theme_type_variation = &"GridPanel"
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="ReversePath" type="HFlowContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=579084847]
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=732578331]
+layout_mode = 2
+
+[node name="ReversePath" type="HFlowContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3" unique_id=579084847]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 script = ExtResource("6_2v3f8")
 metadata/_custom_type_script = "uid://cxvu6hwxvirqs"
+
+[node name="RemoveLastReverse" type="Button" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3" unique_id=1578312701]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/icon_normal_color = Color(1, 0.38, 0.38, 1)
+text = "Remove last plan"
+icon = SubResource("Texture2D_5vgq5")
 
 [node name="PanelContainer3" type="PanelContainer" parent="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer" unique_id=1159502458]
 layout_mode = 2
@@ -149,9 +175,11 @@ oversampling_override = 1.0
 unique_name_in_owner = true
 offset_left = 4.0
 offset_top = 4.0
-offset_right = 96.0
-offset_bottom = 96.0
+offset_right = 434.0
+offset_bottom = 276.0
 
 [connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/Remove" to="." method="_on_remove"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer2/ComputeTimings" to="." method="_compute_timings"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer/RemoveLastForward" to="." method="_remove_last_plan" binds= [1]]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ScrollContainer/VBoxContainer/HBoxContainer3/RemoveLastReverse" to="." method="_remove_last_plan" binds= [2]]
 [connection signal="popup_hide" from="TimePanel" to="." method="_time_panel_closed"]

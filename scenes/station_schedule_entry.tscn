@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://dy4887bupm46g"]
+
+[ext_resource type="Script" uid="uid://dpvqnldmgp4n" path="res://scripts/station_schedule_entry.gd" id="1_1dla4"]
+[ext_resource type="LabelSettings" uid="uid://c6bkqce8bld3w" path="res://resources/station_name.tres" id="2_d56vj"]
+[ext_resource type="LabelSettings" uid="uid://duit3agrf0h5n" path="res://resources/schedule_name.tres" id="3_xee4p"]
+
+[node name="StationScheduleEntry" type="HBoxContainer" unique_id=391984318]
+script = ExtResource("1_1dla4")
+
+[node name="From" type="Label" parent="." unique_id=1013564721]
+layout_mode = 2
+label_settings = ExtResource("2_d56vj")
+
+[node name="Label" type="Label" parent="." unique_id=1055575496]
+layout_mode = 2
+text = "->"
+
+[node name="To" type="Label" parent="." unique_id=1058195144]
+layout_mode = 2
+label_settings = ExtResource("2_d56vj")
+
+[node name="Label2" type="Label" parent="." unique_id=1682648619]
+layout_mode = 2
+text = "("
+
+[node name="Schedule" type="Label" parent="." unique_id=867102938]
+layout_mode = 2
+label_settings = ExtResource("3_xee4p")
+
+[node name="Label3" type="Label" parent="." unique_id=1004535277]
+layout_mode = 2
+text = ")"

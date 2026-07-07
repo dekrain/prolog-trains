@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://tgusvcugentj"]
 
 [ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_1ikky"]
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_i3sco"]
 [ext_resource type="LabelSettings" uid="uid://c6bkqce8bld3w" path="res://resources/station_name.tres" id="2_kxw4v"]
 
 [node name="StationDetails" type="PanelContainer" unique_id=765042475]
@@ -10,6 +11,7 @@ offset_right = -852.0
 offset_bottom = 53.0
 grow_horizontal = 2
 mouse_filter = 1
+theme = ExtResource("1_i3sco")
 theme_override_styles/panel = ExtResource("1_1ikky")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]
@@ -42,3 +44,7 @@ text = "X: # Y: #"
 [node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=292287275]
 layout_mode = 2
 text = "Schedule:"
+
+[node name="Schedule" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1892529783]
+unique_name_in_owner = true
+layout_mode = 2

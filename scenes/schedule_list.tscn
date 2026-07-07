@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cxsavnb7fgs4v"]
 
 [ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_30i2m"]
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_bn325"]
 [ext_resource type="Script" uid="uid://cxvu6hwxvirqs" path="res://scripts/route_display.gd" id="2_cnlx2"]
 
 [node name="ScheduleList" type="PanelContainer" unique_id=765042475]
@@ -11,6 +12,7 @@ offset_right = -852.0
 offset_bottom = 53.0
 grow_horizontal = 2
 mouse_filter = 1
+theme = ExtResource("1_bn325")
 theme_override_styles/panel = ExtResource("1_30i2m")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]

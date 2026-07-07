@@ -13,6 +13,12 @@ var schedule: Schedule
 
 var _edit_time_label: TimeLabel
 
+enum Section {
+	Timings,
+	Forward,
+	Reverse,
+}
+
 func edit(schedule: Schedule):
 	self.schedule = schedule
 	_edit_time_label = null
@@ -39,22 +45,41 @@ func edit(schedule: Schedule):
 	for idx in range(schedule.path.size()):
 		var label := TimeDeltaLabel.new()
 		label.editor = self
+		label.section = Section.Timings
 		if idx == 0:
 			label.set_time(0)
-			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			label.focus_mode = Control.FOCUS_NONE
+			label.disable()
 		else:
+			label.plan_idx = idx - 1
 			label.set_time(schedule.timings[idx - 1] if idx <= schedule.timings.size() else 0)
 		_timing_grid.add_child(label)
 	_refresh_grids()
 
 func _refresh_grids():
-	_refresh_grid(_the_grid, schedule.forward_plans, false)
-	_refresh_grid(_rev_grid, schedule.reverse_plans, true)
+	_refresh_grid(Section.Forward)
+	_refresh_grid(Section.Reverse)
 
-func _refresh_grid(grid: GridContainer, plans: PackedInt32Array, reverse: bool):
+func _refresh_grid(which: Section):
+	var grid: GridContainer
+	var plans: PackedInt32Array
+	var remove_button: Button
+	var reverse: bool
+	match which:
+		Section.Forward:
+			grid = _the_grid
+			plans = schedule.forward_plans
+			remove_button = %RemoveLastForward
+			reverse = false
+		Section.Reverse:
+			grid = _rev_grid
+			plans = schedule.reverse_plans
+			remove_button = %RemoveLastReverse
+			reverse = true
+
+	remove_button.disabled = plans.is_empty()
+
 	Util.clear_children(grid)
-	var time_entries := maxi(3, plans.size() + 1)
+	var time_entries := plans.size() + 1
 	grid.columns = time_entries + 1
 	#var tl := TextureRect.new()
 	#tl.texture = clock_icon
@@ -62,15 +87,36 @@ func _refresh_grid(grid: GridContainer, plans: PackedInt32Array, reverse: bool):
 	#grid.add_child(_wrap_cell(tl))
 	#for idx in range(time_entries):
 	#	grid.add_child(_wrap_cell(Control.new()))
+	var offset := 0
 	for _stat in range(schedule.path.size()):
 		var stat := schedule.path.size() - _stat - 1 if reverse else _stat
+		var del := stat if reverse else _stat - 1
+		if _stat > 0 and del < schedule.timings.size():
+			offset += schedule.timings[del]
 		var station := schedule.path[stat]
 		var label := Label.new()
 		label.label_settings = preload('res://resources/station_name.tres')
 		label.text = station.name
 		grid.add_child(_wrap_cell(label))
 		for idx in range(time_entries):
-			grid.add_child(_wrap_cell(Control.new()))
+			if idx < plans.size():
+				var time := TimeLabel.new()
+				time.set_time(offset + plans[idx])
+				if _stat == 0:
+					time.editor = self
+					time.section = which
+					time.plan_idx = idx
+				else:
+					time.disable()
+				grid.add_child(time)
+			else:
+				if _stat == 0:
+					var slot := AddTimeLabel.new()
+					slot.editor = self
+					slot.section = which
+					grid.add_child(slot)
+				else:
+					grid.add_child(_wrap_cell(Control.new()))
 
 static func _wrap_cell(cell: Control) -> Control:
 	var panel := PanelContainer.new()
@@ -85,7 +131,6 @@ func _compute_timings():
 	if schedule == null:
 		return
 	var timings = pl.call_function('compute_route_timings', [schedule.name])
-	print(timings)
 	schedule.timings = timings
 	var offs := schedule.path.size()
 	for idx in range(1, schedule.path.size()):
@@ -100,18 +145,39 @@ func popup_time_panel(label: TimeLabel):
 func _time_panel_closed():
 	if _edit_time_label != null:
 		_edit_time_label.set_time(_time_editor.time)
+		if _edit_time_label is AddTimeLabel:
+			match _edit_time_label.section:
+				Section.Forward:
+					schedule.forward_plans.push_back(_edit_time_label.time)
+				Section.Reverse:
+					schedule.reverse_plans.push_back(_edit_time_label.time)
+		elif _edit_time_label.plan_idx != -1:
+			match _edit_time_label.section:
+				Section.Timings:
+					schedule.timings[_edit_time_label.plan_idx] = _edit_time_label.time
+				Section.Forward:
+					schedule.forward_plans[_edit_time_label.plan_idx] = _edit_time_label.time
+				Section.Reverse:
+					schedule.reverse_plans[_edit_time_label.plan_idx] = _edit_time_label.time
+		if _edit_time_label.section == Section.Timings:
+			_refresh_grids()
+		else:
+			_refresh_grid(_edit_time_label.section)
 		_edit_time_label = null
 
-class TimeLabel extends PanelContainer:
+class TimeLabel extends ClickablePanel:
 	var time: int
 	var editor: ScheduleEditor
+	var section: ScheduleEditor.Section
+	var plan_idx: int = -1
+
 	var _hbox := HBoxContainer.new()
 	var _icon := TextureRect.new()
 	var _label := Label.new()
 
 	func _init():
-		focus_mode = Control.FOCUS_ALL
-		theme_type_variation = &'GridCell'
+		super._init()
+		pressed.connect(_pressed)
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -131,18 +197,23 @@ class TimeLabel extends PanelContainer:
 	func _format() -> String:
 		return Util.format_time(time)
 
-	func _notification(what):
-		if what == NOTIFICATION_MOUSE_ENTER or what == NOTIFICATION_FOCUS_ENTER:
-			theme_type_variation = &'GridCellHighlight'
-		elif what == NOTIFICATION_MOUSE_EXIT or what == NOTIFICATION_FOCUS_EXIT:
-			if not has_focus():
-				theme_type_variation = &'GridCell'
+	func _pressed():
+		editor.popup_time_panel(self)
 
-	func _gui_input(event: InputEvent):
-		var mb := event as InputEventMouseButton
-		if event.is_action_pressed("ui_accept") or (mb != null and mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed):
-			editor.popup_time_panel(self)
+class AddTimeLabel extends TimeLabel:
+	func _init():
+		theme_type = &'GridCellNew'
+		super._init()
+		set_time(0)
+	func _format() -> String:
+		return 'Add plan'
 
 class TimeDeltaLabel extends TimeLabel:
 	func _format() -> String:
 		return '+ ' + Util.format_time(time)
+
+func _remove_last_plan(which: Section):
+	var plans := schedule.reverse_plans if which == Section.Reverse else schedule.forward_plans
+	if not plans.is_empty():
+		plans.remove_at(plans.size() - 1)
+		_refresh_grid(which)

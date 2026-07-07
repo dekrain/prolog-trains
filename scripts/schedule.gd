@@ -27,13 +27,16 @@ func translate_path():
 	for idx in range(path.size()):
 		path_names[idx] = path[idx].name
 
-func load(pl: Prologot, map: MapView):
+func load_route(pl: Prologot, map: MapView):
 	var res = pl.query_one('schedule_route', [name, '_'])
 	path_names = res['args'][1]
 	path.resize(path_names.size())
 	for idx in range(path_names.size()):
 		path[idx] = map.get_node(path_names[idx]) as Station
-	res = pl.query_one('schedule_timings', [name, '_'])
+
+func load(pl: Prologot, map: MapView):
+	load_route(pl, map)
+	var res = pl.query_one('schedule_timings', [name, '_'])
 	if res != null:
 		timings = PackedInt32Array(res['args'][1])
 	else:

@@ -48,21 +48,27 @@ road(epkgys, javtyn, 1.0).
 
 % schedule(name)
 :- dynamic schedule/1.
-schedule(qhokrz).
 schedule(ugfnfx).
 schedule(xnifin).
+schedule(qhokrz).
 
 % schedule_route(name, Stations)
 :- dynamic schedule_route/2.
-schedule_route(qhokrz, [utookp, hshbyj]).
 schedule_route(ugfnfx, [epkgys, javtyn]).
 schedule_route(xnifin, [javtyn, epkgys, dsijis]).
+schedule_route(qhokrz, [utookp, hshbyj]).
 
 % schedule_timings(name, RoadDeltas)
 :- dynamic schedule_timings/2.
-schedule_timings(qhokrz, [12]).
 schedule_timings(ugfnfx, [13]).
 schedule_timings(xnifin, [13, 15]).
+schedule_timings(qhokrz, [2]).
 
 % schedule_run(name, From, To, StartTime)
 :- dynamic schedule_run/4.
+schedule_run(xnifin, javtyn, dsijis, 780).
+schedule_run(xnifin, dsijis, javtyn, 960).
+schedule_run(qhokrz, utookp, hshbyj, 720).
+schedule_run(qhokrz, utookp, hshbyj, 839).
+schedule_run(qhokrz, hshbyj, utookp, 237).
+schedule_run(qhokrz, hshbyj, utookp, 828).

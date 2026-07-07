@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dhb6fjo20axxk"]
 
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_heq8q"]
 [ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_s7dfd"]
 [ext_resource type="Script" uid="uid://bccnx7tf2g6qm" path="res://scripts/edtor_icon.gd" id="1_y66w3"]
 
@@ -74,6 +75,7 @@ offset_bottom = 53.0
 grow_horizontal = 2
 size_flags_vertical = 0
 mouse_filter = 1
+theme = ExtResource("1_heq8q")
 theme_override_styles/panel = ExtResource("1_s7dfd")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1099123048]

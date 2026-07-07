@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://bndh6sfpfb8ga"]
 
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_4ob2o"]
 [ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_s64qx"]
 [ext_resource type="LabelSettings" uid="uid://c6bkqce8bld3w" path="res://resources/station_name.tres" id="2_rev31"]
 
@@ -10,6 +11,7 @@ offset_right = -852.0
 offset_bottom = 53.0
 grow_horizontal = 2
 mouse_filter = 1
+theme = ExtResource("1_4ob2o")
 theme_override_styles/panel = ExtResource("1_s64qx")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]
