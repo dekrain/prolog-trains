@@ -111,6 +111,7 @@ func save_map():
 
 func load_map():
 	assert(pl.query('reload_db'))
+	select_object(null)
 	Util.clear_children(view)
 	var stations := pl.query_all('station', ['Name'])
 	for st in stations:
@@ -259,20 +260,7 @@ func select_object(obj: MapObject):
 			$StationDetails/%Name.text = obj.name
 			$StationDetails/%XY.text = 'X: %.3f Y: %.3f' % [obj.position.x, obj.position.y]
 			$StationDetails.show()
-			var stops := pl.query_all('station_stop', [obj.name, 'Schedule', 'Time', 'Reverse'])
-			for stop in stops:
-				var schedule := Schedule.new()
-				schedule.name = stop['args'][1]
-				schedule.load_route(pl, view)
-				var reverse: bool = stop['args'][3] != 0
-				var time: int = stop['args'][2]
-				var entry := preload('res://scenes/station_schedule_entry.tscn').instantiate()
-				entry.setup.call_deferred(schedule, reverse, time)
-				var panel := ClickablePanel.new()
-				panel.theme_type = &'InlineCell'
-				panel.add_child(entry)
-				panel.pressed.connect(edit_schedule.bind(schedule))
-				$StationDetails/%Schedule.add_child(panel)
+			_refresh_stops(obj)
 		elif obj is Road:
 			var road := obj as Road
 			$RoadDetails/%From.text = road.from.name
@@ -345,12 +333,32 @@ func _refresh_schedules():
 		btn.pressed.connect(edit_schedule.bind(sched))
 		$ScheduleList/%List.add_child(btn)
 
+func _refresh_stops(station: Station):
+	Util.clear_children($StationDetails/%Schedule)
+	var stops := pl.query_all('station_stop', [station.name, 'Schedule', 'Time', 'Reverse'])
+	for stop in stops:
+		var schedule := Schedule.new()
+		schedule.name = stop['args'][1]
+		schedule.load_route(pl, view)
+		var reverse: bool = stop['args'][3] != 0
+		var time: int = stop['args'][2]
+		var entry := preload('res://scenes/station_schedule_entry.tscn').instantiate()
+		entry.setup.call_deferred(schedule, reverse, time)
+		var panel := ClickablePanel.new()
+		panel.theme_type = &'InlineCell'
+		panel.add_child(entry)
+		panel.pressed.connect(edit_schedule.bind(schedule))
+		$StationDetails/%Schedule.add_child(panel)
+
 func close_overlay():
 	_overlay.hide()
 	_sched_ed.hide()
 	if _sched_ed.schedule != null:
 		_sched_ed.schedule.remove_from_db(pl)
 		_sched_ed.schedule.save_to_db(_pl_writer)
+		var sel_station := _selected_object as Station
+		if sel_station != null:
+			_refresh_stops(sel_station)
 
 func _remove_schedule():
 	_sched_ed.schedule.remove_from_db(pl)
@@ -358,3 +366,6 @@ func _remove_schedule():
 	close_overlay()
 	if $ScheduleList.visible:
 		_refresh_schedules()
+	var sel_station := _selected_object as Station
+	if sel_station != null:
+		_refresh_stops(sel_station)
