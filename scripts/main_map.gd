@@ -66,10 +66,13 @@ func save_map():
 	writer.blank_line()
 	writer.comment('station_xy(name, X, Y)')
 	writer.directive('dynamic station_xy/3')
+	writer.directive('discontiguous station_xy/3')
 	writer.comment('station_color(name, R, G, B)')
 	writer.directive('dynamic station_color/4')
+	writer.directive('discontiguous station_color/4')
 	writer.comment('station_shape(name, Vertices)')
 	writer.directive('dynamic station_shape/2')
+	writer.directive('discontiguous station_shape/2')
 	for child in view.get_children():
 		var station := child as Station
 		if station != null:

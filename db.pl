@@ -11,10 +11,13 @@ station(wegkui).
 
 % station_xy(name, X, Y)
 :- dynamic station_xy/3.
+:- discontiguous station_xy/3.
 % station_color(name, R, G, B)
 :- dynamic station_color/4.
+:- discontiguous station_color/4.
 % station_shape(name, Vertices)
 :- dynamic station_shape/2.
+:- discontiguous station_shape/2.
 station_xy(javtyn, 107.207, -90.16).
 station_color(javtyn, 177, 133, 123).
 station_shape(javtyn, [1.697, 9.886, -10.523, 4.499, 6.765, -9.228, 10.463, -4.973]).
