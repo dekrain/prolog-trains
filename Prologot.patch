@@ -10,7 +10,7 @@ index 0000000..8175f7c
 +../godot-cpp
 \ No newline at end of file
 diff --git a/src/Prologot.cpp b/src/Prologot.cpp
-index 30c7345..e5c9684 100644
+index 30c7345..bb851d2 100644
 --- a/src/Prologot.cpp
 +++ b/src/Prologot.cpp
 @@ -9,6 +9,7 @@
@@ -21,7 +21,16 @@ index 30c7345..e5c9684 100644
  #include <string>
  #include <vector>
  #ifdef _WIN32
-@@ -307,7 +308,10 @@ bool Prologot::initialize(Dictionary const& p_options)
+@@ -31,6 +32,8 @@
+ // =============================================================================
+ 
+ Prologot* Prologot::m_singleton = nullptr;
++Ref<PrologotEngine> PrologotEngine::m_global_engine = nullptr;
++thread_local Ref<PrologotEngine> PrologotEngine::t_current_engine;
+ 
+ // =============================================================================
+ // Godot Method Binding
+@@ -307,7 +310,10 @@ bool Prologot::initialize(Dictionary const& p_options)
      argv_list.push_back(nullptr);
  
      // Initialize Prolog engine
@@ -33,3 +42,190 @@ index 30c7345..e5c9684 100644
      {
          if (!handle_prolog_exception(0, "PL_initialise"))
          {
+@@ -317,6 +323,10 @@ bool Prologot::initialize(Dictionary const& p_options)
+         return false;
+     }
+ 
++	// Store the global engine instance
++	PrologotEngine::m_global_engine = memnew(PrologotEngine(PL_current_engine()));
++	PrologotEngine::t_current_engine = PrologotEngine::m_global_engine;
++
+     // Log which SWI_HOME_DIR is being used by Prolog
+     term_t home_term = PL_new_term_ref();
+     predicate_t flag_pred = PL_predicate("current_prolog_flag", 2, "system");
+@@ -432,6 +442,7 @@ void Prologot::cleanup()
+ {
+     if (m_initialized)
+     {
++		PrologotEngine::m_global_engine = nullptr;
+         // PL_cleanup(0) shuts down the Prolog engine
+         // The argument (0) means normal cleanup
+         PL_cleanup(0);
+@@ -1476,3 +1487,60 @@ String Prologot::get_last_error() const
+ {
+     return m_last_error;
+ }
++
++// =============================================================================
++// Engine Manipulation
++// =============================================================================
++
++void PrologotEngine::_bind_methods()
++{
++    ClassDB::bind_method(D_METHOD("set_active_for_this_thread"),
++                         &PrologotEngine::set_active_for_this_thread);
++    ClassDB::bind_static_method("PrologotEngine", D_METHOD("deactivate"),
++                         &PrologotEngine::deactivate);
++    ClassDB::bind_static_method("PrologotEngine", D_METHOD("get_current"),
++                         &PrologotEngine::get_current);
++}
++
++void PrologotEngine::set_active_for_this_thread() {
++	PL_set_engine(m_engine, nullptr);
++}
++
++void PrologotEngine::deactivate() {
++	PL_set_engine(nullptr, nullptr);
++	if (t_current_engine.is_valid()) {
++		t_current_engine = nullptr;
++	}
++}
++
++Ref<PrologotEngine> PrologotEngine::get_current() {
++	PL_engine_t eng = PL_current_engine();
++	if (!eng)
++		return nullptr;
++	Ref<PrologotEngine> inst = t_current_engine;
++	if (inst.is_valid() and inst->m_engine == eng)
++		return inst;
++	return nullptr;
++}
++
++PrologotEngine::PrologotEngine() {
++	ERR_FAIL_COND_MSG(!Prologot::get_singleton() or !Prologot::get_singleton()->is_initialized(), "Prologot must be initialized");
++
++	m_engine = PL_create_engine(nullptr);
++	ERR_FAIL_NULL(m_engine);
++}
++
++PrologotEngine::PrologotEngine(PL_engine_t eng) {
++	m_engine = eng;
++	ERR_FAIL_NULL(m_engine);
++}
++
++PrologotEngine::~PrologotEngine() {
++	if (t_current_engine == this) {
++		deactivate();
++	}
++
++	if (m_engine) {
++		PL_destroy_engine(m_engine);
++	}
++}
+diff --git a/src/Prologot.hpp b/src/Prologot.hpp
+index cdef93d..7c6a8fa 100644
+--- a/src/Prologot.hpp
++++ b/src/Prologot.hpp
+@@ -17,6 +17,8 @@
+ #include <godot_cpp/variant/string.hpp>
+ #include <godot_cpp/variant/variant.hpp>
+ 
++#include "PrologotEngine.hpp"
++
+ using namespace godot;
+ 
+ /**
+@@ -448,6 +450,11 @@ public:
+      */
+     Array list_predicates();
+ 
++	/**
++	 * @brief Get the global engine instance that's instantiated by default.
++	 */
++	PrologotEngine* get_global_engine();
++
+ protected:
+ 
+     /**
+diff --git a/src/PrologotEngine.hpp b/src/PrologotEngine.hpp
+new file mode 100644
+index 0000000..b53e0eb
+--- /dev/null
++++ b/src/PrologotEngine.hpp
+@@ -0,0 +1,64 @@
++#pragma once
++
++#include <SWI-Prolog.h>
++#include <godot_cpp/classes/ref_counted.hpp>
++
++using namespace godot;
++
++/**
++ * @class PrologotEngine
++ * @brief Class encapsulating a SWI-Prolog per-thread engine.
++ *
++ * This class wraps the SWI-Prolog PL_engine_t and exposes it to GDScript,
++ * allowing users to execute Prolog in multiple threads.
++ */
++class PrologotEngine: public RefCounted
++{
++    GDCLASS(PrologotEngine, RefCounted)
++
++public:
++
++    /**
++     * @brief Constructs a new PrologotEngine instance.
++     *
++     * Creates a new engine instance.
++     */
++    PrologotEngine();
++
++    /**
++     * @brief Destructs the PrologotEngine instance.
++     *
++     * Ensures proper cleanup of the Prolog engine.
++     */
++    ~PrologotEngine();
++
++	void set_active_for_this_thread();
++	static void deactivate();
++	static Ref<PrologotEngine> get_current();
++
++protected:
++
++    /**
++     * @brief Binds all C++ methods to GDScript.
++     *
++     * This method is called by Godot's class system to register all methods
++     * that should be accessible from GDScript. Methods are organized by
++     * category for better code organization.
++     */
++    static void _bind_methods();
++
++private:
++
++	friend class Prologot;
++
++	PrologotEngine(PL_engine_t p_engine);
++
++	PL_engine_t m_engine = nullptr;
++
++	/**
++	 * @brief The global engine instance used as default.
++	 */
++	static Ref<PrologotEngine> m_global_engine;
++
++	static thread_local Ref<PrologotEngine> t_current_engine;
++};
+diff --git a/src/register_types.cpp b/src/register_types.cpp
+index cf6efa7..342da62 100644
+--- a/src/register_types.cpp
++++ b/src/register_types.cpp
+@@ -37,6 +37,7 @@ void initialize_prologot_module(ModuleInitializationLevel p_level)
+     // Register the Prologot class with Godot's class database
+     // This makes it available to GDScript and the editor
+     ClassDB::register_class<Prologot>();
++    ClassDB::register_class<PrologotEngine>();
+ }
+ 
+ /**

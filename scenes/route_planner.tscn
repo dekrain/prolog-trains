@@ -1,0 +1,155 @@
+[gd_scene format=3 uid="uid://ddkamp2u4i3km"]
+
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_tulxj"]
+[ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="2_tmxn2"]
+[ext_resource type="Script" uid="uid://dvxhk73hpek1v" path="res://scripts/route_planner.gd" id="3_p2a60"]
+[ext_resource type="Script" uid="uid://b25na3251vrbe" path="res://scripts/time_label.gd" id="3_tmxn2"]
+[ext_resource type="Script" uid="uid://cxvu6hwxvirqs" path="res://scripts/route_display.gd" id="4_h0c2j"]
+[ext_resource type="Script" uid="uid://cx3yqbx651fhq" path="res://scripts/expanding_scroll_container.gd" id="5_xjhch"]
+[ext_resource type="Script" uid="uid://bccnx7tf2g6qm" path="res://scripts/edtor_icon.gd" id="6_scp0w"]
+[ext_resource type="PackedScene" uid="uid://rbnxde7swjn" path="res://scenes/time_editor.tscn" id="7_scp0w"]
+
+[sub_resource type="Texture2D" id="Texture2D_nmdra"]
+resource_local_to_scene = false
+resource_name = ""
+script = ExtResource("6_scp0w")
+icon = &"ArrowRight"
+metadata/_custom_type_script = "uid://bccnx7tf2g6qm"
+
+[node name="RoutePlanner" type="PanelContainer" unique_id=765042475]
+custom_minimum_size = Vector2(250, 0)
+offset_right = 283.0
+offset_bottom = 152.0
+mouse_filter = 1
+theme = ExtResource("1_tulxj")
+theme_override_styles/panel = ExtResource("2_tmxn2")
+script = ExtResource("3_p2a60")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=876066244]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1772455806]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=282105133]
+layout_mode = 2
+text = "Plan route"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=2090587878]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=358787600]
+layout_mode = 2
+text = "Time range:"
+
+[node name="TimeFrom" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=333446032]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"GridCell"
+script = ExtResource("3_tmxn2")
+metadata/_custom_type_script = "uid://b25na3251vrbe"
+
+[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=659625437]
+layout_mode = 2
+text = "—"
+
+[node name="TimeTo" type="PanelContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1855029063]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"GridCell"
+script = ExtResource("3_tmxn2")
+time = 1439
+metadata/_custom_type_script = "uid://b25na3251vrbe"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1095224143]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=1099462630]
+layout_mode = 2
+text = "Stations:"
+
+[node name="Route" type="HFlowContainer" parent="MarginContainer/VBoxContainer/HBoxContainer2" unique_id=193379726]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("4_h0c2j")
+metadata/_custom_type_script = "uid://cxvu6hwxvirqs"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1317122719]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer3" unique_id=263443974]
+layout_mode = 2
+text = "Max:"
+
+[node name="MaxResults" type="SpinBox" parent="MarginContainer/VBoxContainer/HBoxContainer3" unique_id=875866773]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 10
+min_value = 1.0
+max_value = 50.0
+value = 5.0
+alignment = 2
+
+[node name="ShowResults" type="Button" parent="MarginContainer/VBoxContainer" unique_id=845052386]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Show results"
+icon = SubResource("Texture2D_nmdra")
+
+[node name="ResultsBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1964862192]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Padding" type="Control" parent="MarginContainer/VBoxContainer/ResultsBox" unique_id=128944505]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ResultsBox" unique_id=1210657503]
+layout_mode = 2
+text = "Results:"
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer/VBoxContainer/ResultsBox" unique_id=743179107]
+layout_mode = 2
+theme_type_variation = &"GridPanel"
+
+[node name="ExpandingScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/ResultsBox/PanelContainer" unique_id=1999544197]
+layout_mode = 2
+script = ExtResource("5_xjhch")
+max_size = Vector2(0, 500)
+metadata/_custom_type_script = "uid://cx3yqbx651fhq"
+
+[node name="Results" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ResultsBox/PanelContainer/ExpandingScrollContainer" unique_id=1851136684]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TimePanel" type="PopupPanel" parent="." unique_id=529788030]
+unique_name_in_owner = true
+oversampling_override = 1.0
+
+[node name="TimeEditor" parent="TimePanel" unique_id=653745412 instance=ExtResource("7_scp0w")]
+unique_name_in_owner = true
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 434.0
+offset_bottom = 276.0
+
+[node name="Recycler" type="Control" parent="." unique_id=824200379]
+process_mode = 4
+visible = false
+light_mask = 0
+visibility_layer = 0
+layout_mode = 2
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/TimeFrom" to="." method="_popup_time_panel" flags=18]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/HBoxContainer/TimeTo" to="." method="_popup_time_panel" flags=18]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ShowResults" to="." method="_show_results"]
+[connection signal="popup_hide" from="TimePanel" to="." method="_time_panel_closed"]

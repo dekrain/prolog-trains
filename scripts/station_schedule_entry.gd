@@ -3,7 +3,7 @@ extends HBoxContainer
 @onready var _l_from: Label = $From
 @onready var _l_to: Label = $To
 @onready var _l_schedule: Label = $Schedule
-var _time := ScheduleEditor.TimeLabel.new()
+var _time := TimeLabel.new()
 
 func _ready():
 	_time.disable()

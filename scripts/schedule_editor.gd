@@ -2,16 +2,19 @@ class_name ScheduleEditor extends PanelContainer
 
 signal remove
 
+const TimeEditor = preload('res://scripts/time_editor.gd')
+
 var pl: Prologot
 var schedule: Schedule
+@export var clock_icon: EditorIcon
+
 @onready var _timing_grid: GridContainer = %Timing
 @onready var _the_grid: GridContainer = %TheGrid
 @onready var _rev_grid: GridContainer = %ReverseGrid
 @onready var _time_panel: PopupPanel = %TimePanel
-@onready var _time_editor: Control = %TimeEditor
-@export var clock_icon: EditorIcon
+@onready var _time_editor: TimeEditor = %TimeEditor
 
-var _edit_time_label: TimeLabel
+var _edit_time_label: SchedTimeLabel
 
 enum Section {
 	Timings,
@@ -43,7 +46,8 @@ func edit(schedule: Schedule):
 		label.text = station.name
 		_timing_grid.add_child(_wrap_cell(label))
 	for idx in range(schedule.path.size()):
-		var label := TimeDeltaLabel.new()
+		var label := SchedTimeLabel.new()
+		label.mode = TimeLabel.Mode.Relative
 		label.editor = self
 		label.section = Section.Timings
 		if idx == 0:
@@ -100,7 +104,7 @@ func _refresh_grid(which: Section):
 		grid.add_child(_wrap_cell(label))
 		for idx in range(time_entries):
 			if idx < plans.size():
-				var time := TimeLabel.new()
+				var time := SchedTimeLabel.new()
 				time.set_time(offset + plans[idx])
 				if _stat == 0:
 					time.editor = self
@@ -137,7 +141,7 @@ func _compute_timings():
 		_timing_grid.get_child(offs + idx).set_time(schedule.timings[idx - 1])
 	_refresh_grids()
 
-func popup_time_panel(label: TimeLabel):
+func popup_time_panel(label: SchedTimeLabel):
 	_edit_time_label = label
 	_time_editor.set_time(label.time)
 	_time_panel.popup(Rect2(label.global_position + Vector2(0, label.size.y), Vector2()))
@@ -165,52 +169,26 @@ func _time_panel_closed():
 			_refresh_grid(_edit_time_label.section)
 		_edit_time_label = null
 
-class TimeLabel extends ClickablePanel:
-	var time: int
+@warning_ignore("missing_tool")
+class SchedTimeLabel extends TimeLabel:
 	var editor: ScheduleEditor
 	var section: ScheduleEditor.Section
 	var plan_idx: int = -1
 
-	var _hbox := HBoxContainer.new()
-	var _icon := TextureRect.new()
-	var _label := Label.new()
-
 	func _init():
 		super._init()
 		pressed.connect(_pressed)
-		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		_label.label_settings = preload('res://resources/time_label.tres')
-		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		var icon := EditorIcon.new()
-		icon.icon = &'Time'
-		_icon.texture = icon
-		_hbox.add_child(_icon)
-		_hbox.add_child(_label)
-		add_child(_hbox)
-
-	func set_time(mins: int):
-		time = mins
-		_label.text = _format()
-
-	func _format() -> String:
-		return Util.format_time(time)
 
 	func _pressed():
 		editor.popup_time_panel(self)
 
-class AddTimeLabel extends TimeLabel:
+class AddTimeLabel extends SchedTimeLabel:
 	func _init():
 		theme_type = &'GridCellNew'
 		super._init()
 		set_time(0)
 	func _format() -> String:
 		return 'Add plan'
-
-class TimeDeltaLabel extends TimeLabel:
-	func _format() -> String:
-		return '+ ' + Util.format_time(time)
 
 func _remove_last_plan(which: Section):
 	var plans := schedule.reverse_plans if which == Section.Reverse else schedule.forward_plans

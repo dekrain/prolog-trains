@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://bndh6sfpfb8ga" path="res://scenes/road_details.tscn" id="6_cyf2o"]
 [ext_resource type="Script" uid="uid://dgxm2a0oijpp1" path="res://scripts/overlay.gd" id="8_2xk3c"]
 [ext_resource type="PackedScene" uid="uid://7xn72a2pn4um" path="res://scenes/schedule_editor.tscn" id="8_64gt2"]
+[ext_resource type="PackedScene" uid="uid://ddkamp2u4i3km" path="res://scenes/route_planner.tscn" id="8_ulx81"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_64gt2"]
 bg_color = Color(0.6, 0.6, 0.6, 0.24705882)
@@ -92,6 +93,20 @@ offset_right = 100.5
 offset_bottom = 47.5
 grow_vertical = 2
 
+[node name="RoutePlanner" parent="." unique_id=637291776 instance=ExtResource("8_ulx81")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -303.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 172.0
+grow_horizontal = 0
+
 [connection signal="local_transform_changed" from="View" to="BG" method="queue_redraw"]
 [connection signal="clicked" from="Overlay" to="." method="close_overlay"]
 [connection signal="remove" from="ScheduleEditor" to="." method="_remove_schedule"]
+[connection signal="popup_closed" from="RoutePlanner" to="." method="_popup_closed"]
+[connection signal="popup_opened" from="RoutePlanner" to="." method="_popup_opened"]
+[connection signal="transition" from="RoutePlanner" to="." method="_route_planner_transition"]

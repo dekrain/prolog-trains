@@ -15,6 +15,11 @@ func add_station(station: Station):
 	path_names.push_back(station.name)
 	path_changed.emit()
 
+func clear():
+	path.clear()
+	path_names.clear()
+	path_changed.emit()
+
 func gen_name(pl: Prologot):
 	while true:
 		var nm := ''.join(range(6).map(func(i): return String.chr(randi_range(0x61, 0x7A))))

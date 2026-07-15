@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://covgmrnvbrkkj"]
+
+[ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_eop0o"]
+[ext_resource type="Script" uid="uid://chqtpbfqqv78" path="res://scripts/travel_route_display.gd" id="2_wxsur"]
+[ext_resource type="Script" uid="uid://b25na3251vrbe" path="res://scripts/time_label.gd" id="3_irjim"]
+
+[node name="TravelRouteDisplay" type="FoldableContainer" unique_id=200954904]
+custom_minimum_size = Vector2(500, 0)
+offset_right = 313.0
+offset_bottom = 65.0
+theme = ExtResource("1_eop0o")
+folded = true
+title_text_overrun_behavior = 1
+script = ExtResource("2_wxsur")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=11794970]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StartTime" type="PanelContainer" parent="HBoxContainer" unique_id=2114540400]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"GridCell"
+script = ExtResource("3_irjim")
+metadata/_custom_type_script = "uid://b25na3251vrbe"
+
+[node name="Label" type="Label" parent="HBoxContainer" unique_id=89552435]
+layout_mode = 2
+text = "Trains:"
+vertical_alignment = 1
+
+[node name="NumTrains" type="Label" parent="HBoxContainer" unique_id=1993842406]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="HBoxContainer" unique_id=811540540]
+layout_mode = 2
+text = "Score:"
+vertical_alignment = 1
+
+[node name="Score" type="Label" parent="HBoxContainer" unique_id=346257511]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=2040149110]
+visible = false
+layout_mode = 2
+theme_type_variation = &"GridPanel"
+
+[node name="Segments" type="VBoxContainer" parent="PanelContainer" unique_id=874828056]
+unique_name_in_owner = true
+layout_mode = 2

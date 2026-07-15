@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://byftrjhvyli1g"]
+
+[ext_resource type="PackedScene" uid="uid://dboyafb6wn6tt" path="res://tools/test_grid.tscn" id="1_dmd8l"]
+[ext_resource type="Script" uid="uid://c7dljb0v05s27" path="res://tools/test_anchors.gd" id="1_s7gct"]
+
+[node name="TestAnchors" type="PanelContainer" unique_id=1492349728]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 581.0
+grow_horizontal = 2
+script = ExtResource("1_s7gct")
+side = 1
+duration = 0.7
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=818002879]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer" unique_id=456578312]
+layout_mode = 2
+text = "Test panel"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TestGrid" parent="VBoxContainer" unique_id=391868148 instance=ExtResource("1_dmd8l")]
+layout_mode = 2

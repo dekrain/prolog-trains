@@ -51,6 +51,28 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ufndy"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.40605202, 0.22483352, 0.07733225, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ybqih"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.14846918, 0.2584281, 0.43697187, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [resource]
 GridCell/base_type = &"Panel"
 GridCell/styles/panel = SubResource("StyleBoxFlat_cviax")
@@ -62,3 +84,7 @@ GridPanel/base_type = &"Panel"
 GridPanel/styles/panel = SubResource("StyleBoxFlat_fgeqy")
 InlineCell/base_type = &"Panel"
 InlineCell/styles/panel = SubResource("StyleBoxFlat_m7jai")
+PathSegRide/base_type = &"Panel"
+PathSegRide/styles/panel = SubResource("StyleBoxFlat_ufndy")
+PathSegWait/base_type = &"Panel"
+PathSegWait/styles/panel = SubResource("StyleBoxFlat_ybqih")

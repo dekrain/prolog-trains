@@ -20,14 +20,20 @@ enum Tool {
 
 var _hover_object: MapObject = null
 var _selected_object: MapObject = null
+# New schedule for Tool.SET_SCHEDULE or RoutePlanner.schedule for Tool.PLAN_ROUTE
 var _building_path: Schedule = null
 var _dragging := false
 var _current_tool := Tool.PAN
+
+const MARGIN := 20.0
+const TRANSITION_DUR := 0.9
 
 func _ready():
 	pl.initialize()
 	_pl_writer = preload('res://scripts/prolog_writer.gd').new(pl)
 	_sched_ed.pl = pl
+	$RoutePlanner.pl = pl
+	$RoutePlanner.map = view
 	view.local_transform_changed.connect(_view_changed)
 	get_viewport().size_changed.connect(_view_changed)
 	_tools.select(0)
@@ -176,7 +182,15 @@ func _unhandled_input(event):
 								_commit_path()
 							else:
 								_reset_path()
-				Tool.PLAN_ROUTE: pass
+				Tool.PLAN_ROUTE:
+					if mb.pressed:
+						var station := _hover_object as Station
+						if station != null:
+							if not station._state & MapObject.STATE_SELECTED:
+								_building_path.add_station(station)
+								station.set_state(MapObject.STATE_SELECTED, true)
+						else:
+							_reset_path()
 			get_viewport().set_input_as_handled()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP:
 			zoom_view_by(ZOOM_SENS, mb.position)
@@ -197,7 +211,6 @@ func _view_changed():
 	var tl := view.to_local(Vector2())
 	var br := view.to_local(Vector2(get_viewport().size))
 	ui.get_node(^'%Bounds').text = 'L=%.2f T=%.2f R=%.2f B=%.2f' % [tl.x, tl.y, br.x, br.y]
-	#ui.get_node(^'%Bounds').text = 'L=%s T=%s R=%s B=%s' % [tl.x, tl.y, br.x, br.y].map(func(n): return String.num(n, 2))
 
 func _tool_changed(idx: int):
 	_dragging = false
@@ -214,6 +227,11 @@ func _tool_changed(idx: int):
 		_refresh_schedules()
 	else:
 		$ScheduleList.hide()
+	if _current_tool == Tool.PLAN_ROUTE:
+		$RoutePlanner.show()
+		_building_path = $RoutePlanner.schedule
+	else:
+		$RoutePlanner.hide()
 
 func _place_station_at(pos: Vector2):
 	pos = view.to_local(pos)
@@ -286,8 +304,8 @@ func edit_schedule(schedule: Schedule):
 	_sched_ed.edit(schedule)
 
 func _obj_mouse_enter(obj: MapObject):
-	if _current_tool in [Tool.SELECT, Tool.REMOVE, Tool.PLACE_ROAD, Tool.SET_SCHEDULE]:
-		if (_current_tool == Tool.PLACE_ROAD or _current_tool == Tool.SET_SCHEDULE) and obj is not Station:
+	if _current_tool in [Tool.SELECT, Tool.REMOVE, Tool.PLACE_ROAD, Tool.SET_SCHEDULE, Tool.PLAN_ROUTE]:
+		if (_current_tool == Tool.PLACE_ROAD or _current_tool == Tool.SET_SCHEDULE or _current_tool == Tool.PLAN_ROUTE) and obj is not Station:
 			return
 		if _hover_object != null:
 			_hover_object.set_state(MapObject.STATE_HOVERED_ALL, false)
@@ -307,9 +325,12 @@ func _obj_changed(obj: MapObject):
 func _reset_path():
 	for station in _building_path.path:
 		station.set_state(MapObject.STATE_SELECTED, false)
-	$ScheduleList/%Current.hide()
-	$ScheduleList/%CurrentRoute.track_schedule = null
-	_building_path = null
+	if _current_tool == Tool.SET_SCHEDULE:
+		$ScheduleList/%Current.hide()
+		$ScheduleList/%CurrentRoute.track_schedule = null
+		_building_path = null
+	elif _current_tool == Tool.PLAN_ROUTE:
+		_building_path.clear()
 
 func _commit_path():
 	_building_path.gen_name(pl)
@@ -350,15 +371,25 @@ func _refresh_stops(station: Station):
 		panel.pressed.connect(edit_schedule.bind(schedule))
 		$StationDetails/%Schedule.add_child(panel)
 
+
+func _popup_opened():
+	_overlay.show()
+
+func _popup_closed():
+	_overlay.hide()
+
 func close_overlay():
 	_overlay.hide()
-	_sched_ed.hide()
-	if _sched_ed.schedule != null:
-		_sched_ed.schedule.remove_from_db(pl)
-		_sched_ed.schedule.save_to_db(_pl_writer)
-		var sel_station := _selected_object as Station
-		if sel_station != null:
-			_refresh_stops(sel_station)
+	if _sched_ed.visible:
+		_sched_ed.hide()
+		if _sched_ed.schedule != null:
+			_sched_ed.schedule.remove_from_db(pl)
+			_sched_ed.schedule.save_to_db(_pl_writer)
+			var sel_station := _selected_object as Station
+			if sel_station != null:
+				_refresh_stops(sel_station)
+	if _current_tool == Tool.PLAN_ROUTE:
+		$RoutePlanner.contract()
 
 func _remove_schedule():
 	_sched_ed.schedule.remove_from_db(pl)
@@ -369,3 +400,31 @@ func _remove_schedule():
 	var sel_station := _selected_object as Station
 	if sel_station != null:
 		_refresh_stops(sel_station)
+
+var _planner_tween: Tween
+
+func _route_planner_transition(full_screen: bool):
+	if _planner_tween != null:
+		_planner_tween.kill()
+	_planner_tween = $RoutePlanner.create_tween()
+	var anchor: float
+	var pos: Vector2 = $RoutePlanner.position
+	if full_screen:
+		$RoutePlanner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		anchor = 0.5
+	else:
+		$RoutePlanner.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		anchor = 1.0
+	$RoutePlanner.position = pos
+	_planner_tween.set_parallel(true)
+	_planner_tween.set_ease(Tween.EASE_OUT)
+	_planner_tween.set_trans(Tween.TRANS_CUBIC)
+	_planner_tween.tween_property($RoutePlanner, ^':offset_left', MARGIN, TRANSITION_DUR)
+	_planner_tween.tween_property($RoutePlanner, ^':offset_right', -MARGIN, TRANSITION_DUR)
+	_planner_tween.tween_property($RoutePlanner, ^':anchor_left', anchor, TRANSITION_DUR)
+	_planner_tween.tween_property($RoutePlanner, ^':anchor_right', anchor, TRANSITION_DUR)
+
+	if full_screen:
+		_overlay.show()
+	else:
+		_overlay.hide()

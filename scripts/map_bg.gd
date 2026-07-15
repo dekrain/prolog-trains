@@ -32,7 +32,7 @@ func draw_gridlines(dir: Orientation, center: float, size: float, scale: float, 
 	var high := low + size / scale
 	var pos := ceilf(low / spacing_um) * spacing_um
 	var part := ceili(low / spacing_um)
-	var in_editor := Engine.is_editor_hint()
+	var in_editor := is_part_of_edited_scene()
 	while pos < high:
 		var screen_pos = pos * scale + center
 		var is_major := part % 4 == 0
