@@ -1,12 +1,1 @@
-[configuration]
-entry_symbol = "prologot_library_init"
-compatibility_minimum = "4.2"
-reloadable = true
-
-[libraries]
-
-linux.debug.x86_64 = "linux/libprologot.linux.template_debug.x86_64.so"
-
-[dependencies]
-
-linux.debug.x86_64 = {"linux/libswipl.so": ""}
+../Prologot/bin/prologot.gdextension

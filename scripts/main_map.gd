@@ -48,6 +48,8 @@ func _ready():
 		if road != null:
 			road.quality = v
 	)
+	if not FileAccess.file_exists('res://db.pl'):
+		DirAccess.copy_absolute('res://empty.pl', 'res://db.pl')
 	#pl.consult_file('res://db.pl')
 	pl.consult_file('res://rules.pl')
 	load_map()
