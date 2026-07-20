@@ -22,6 +22,7 @@ var _hover_object: MapObject = null
 var _selected_object: MapObject = null
 # New schedule for Tool.SET_SCHEDULE or RoutePlanner.schedule for Tool.PLAN_ROUTE
 var _building_path: Schedule = null
+var _display_path: Schedule = null
 var _dragging := false
 var _current_tool := Tool.PAN
 
@@ -41,6 +42,7 @@ func _ready():
 	center_around(Vector2())
 	ui.get_node(^'%Save').pressed.connect(save_map)
 	ui.get_node(^'%Load').pressed.connect(load_map)
+	ui.get_node(^'%RevealUnused').pressed.connect(_reveal_unused_objs)
 	$RoadDetails/%Quality.value_changed.connect(func(v: float):
 		var road := _selected_object as Road
 		if road != null:
@@ -118,6 +120,7 @@ func save_map():
 func load_map():
 	assert(pl.query('reload_db'))
 	select_object(null)
+	_highlight_schedule(null)
 	Util.clear_children(view)
 	var stations := pl.query_all('station', ['Name'])
 	for st in stations:
@@ -136,6 +139,7 @@ func load_map():
 		_add_object(obj)
 	if $ScheduleList.visible:
 		_refresh_schedules()
+	_refresh_stats()
 
 func _unhandled_input(event):
 	if _overlay.visible:
@@ -159,10 +163,10 @@ func _unhandled_input(event):
 					if mb.pressed:
 						var st := _hover_object as Station
 						if st != null:
-							if _selected_object == null:
-								select_object(st)
-							else:
+							if _selected_object is Station:
 								_place_road(_selected_object, st)
+							else:
+								select_object(st)
 						else:
 							select_object(null)
 				Tool.SET_SCHEDULE:
@@ -199,6 +203,13 @@ func _unhandled_input(event):
 		elif mb.button_index == MOUSE_BUTTON_MIDDLE:
 			# Pan view regardless of view
 			_dragging = mb.pressed
+		elif mb.button_index == MOUSE_BUTTON_RIGHT:
+			if mb.pressed and (_current_tool == Tool.PLACE_STATION or _current_tool == Tool.SELECT):
+				# Recompute station polygon
+				var station := _selected_object as Station
+				if station != null:
+					station.generate()
+				get_viewport().set_input_as_handled()
 		return
 	var mm := event as InputEventMouseMotion
 	if mm != null:
@@ -241,12 +252,15 @@ func _place_station_at(pos: Vector2):
 	_add_object(station)
 	station.gen_name()
 	station.save_to_db_all(_pl_writer)
+	select_object(station)
+	_queue_refresh_stats()
 
 func _place_road(from: Station, to: Station):
 	select_object(null)
 	if from == to or _has_road(from, to):
 		return
-	if to.name < from.name:
+	# Compare as Strings, NOT pointers
+	if String(to.name) < String(from.name):
 		var _tmp := from
 		from = to
 		to = _tmp
@@ -258,6 +272,17 @@ func _place_road(from: Station, to: Station):
 	_add_object(road)
 	road.name = road_name
 	road.save_to_db(_pl_writer)
+	select_object(road)
+	_queue_refresh_stats()
+
+func _get_road(from: Station, to: Station) -> Road:
+	# Compare as Strings, NOT pointers
+	if String(to.name) < String(from.name):
+		var _tmp := from
+		from = to
+		to = _tmp
+	var road_name := 'r_%s_%s' % [from.name, to.name]
+	return view.get_node(road_name) as Road
 
 func _add_object(obj: MapObject):
 	obj.mouse_entered.connect(_obj_mouse_enter.bind(obj))
@@ -293,15 +318,37 @@ func remove_object(obj: MapObject):
 		_selected_object = null
 	if obj.remove_from_db(pl):
 		obj.queue_free()
+		_queue_refresh_stats()
 	else:
 		obj.set_state(MapObject.ALL_STATES, false)
 
 func edit_schedule(schedule: Schedule):
-	if not schedule.fully_loaded:
+	if schedule.load_stage < Schedule.LoadStage.Full:
 		schedule.load(pl, view)
 	_overlay.show()
 	_sched_ed.show()
 	_sched_ed.edit(schedule)
+
+func _highlight_schedule(schedule: Schedule):
+	if _display_path != null:
+		for station in _display_path.path:
+			station.set_state(MapObject.STATE_HOVERED, false)
+		for idx in range(_display_path.path.size() - 1):
+			var a := _display_path.path[idx]
+			var b := _display_path.path[idx + 1]
+			var road := _get_road(a, b)
+			road.set_state(MapObject.STATE_HOVERED, false)
+	_display_path = schedule
+	if _display_path != null:
+		if _display_path.load_stage < Schedule.LoadStage.Path:
+			_display_path.load_route(pl, view)
+		for station in _display_path.path:
+			station.set_state(MapObject.STATE_HOVERED, true)
+		for idx in range(_display_path.path.size() - 1):
+			var a := _display_path.path[idx]
+			var b := _display_path.path[idx + 1]
+			var road := _get_road(a, b)
+			road.set_state(MapObject.STATE_HOVERED, true)
 
 func _obj_mouse_enter(obj: MapObject):
 	if _current_tool in [Tool.SELECT, Tool.REMOVE, Tool.PLACE_ROAD, Tool.SET_SCHEDULE, Tool.PLAN_ROUTE]:
@@ -319,7 +366,7 @@ func _obj_mouse_exit(obj: MapObject):
 		_hover_object = null
 
 func _obj_changed(obj: MapObject):
-	obj.remove_from_db(pl)
+	obj.remove_from_db(pl, true)
 	obj.save_to_db_all(_pl_writer)
 
 func _reset_path():
@@ -339,6 +386,7 @@ func _commit_path():
 		_refresh_schedules()
 	edit_schedule(_building_path)
 	_reset_path()
+	_queue_refresh_stats()
 
 func _has_road(from: Station, to: Station):
 	return pl.query('road_between', [from.name, to.name])
@@ -352,11 +400,17 @@ func _refresh_schedules():
 		var btn := ScheduleButton.new()
 		btn.schedule = sched
 		btn.pressed.connect(edit_schedule.bind(sched))
+		btn.mouse_entered.connect(_highlight_schedule.bind(sched))
+		btn.mouse_exited.connect(_highlight_schedule.bind(null))
 		$ScheduleList/%List.add_child(btn)
 
 func _refresh_stops(station: Station):
 	Util.clear_children($StationDetails/%Schedule)
 	var stops := pl.query_all('station_stop', [station.name, 'Schedule', 'Time', 'Reverse'])
+	stops.sort_custom(func(a, b):
+		# Sort by time
+		return a['args'][2] < b['args'][2]
+	)
 	for stop in stops:
 		var schedule := Schedule.new()
 		schedule.name = stop['args'][1]
@@ -369,8 +423,36 @@ func _refresh_stops(station: Station):
 		panel.theme_type = &'InlineCell'
 		panel.add_child(entry)
 		panel.pressed.connect(edit_schedule.bind(schedule))
+		panel.mouse_entered.connect(_highlight_schedule.bind(schedule))
+		panel.mouse_exited.connect(_highlight_schedule.bind(null))
 		$StationDetails/%Schedule.add_child(panel)
 
+var _stats_queued: bool = false
+
+func _queue_refresh_stats():
+	if not _stats_queued:
+		_refresh_stats.call_deferred()
+		_stats_queued = true
+
+func _refresh_stats():
+	_stats_queued = false
+	var status: String
+	var n_stations: int = _count_preds('station', 1)
+	var n_roads: int = _count_preds('road', 3)
+	var n_schedules: int = _count_preds('schedule', 1)
+	var n_runs: int = _count_preds('schedule_run', 4)
+	status += "Stations: %d\n" % [n_stations]
+	status += "Roads: %d\n" % [n_roads]
+	status += "Schedules: %d\n" % [n_schedules]
+	status += "Train runs: %d\n" % [n_runs]
+	ui.get_node(^'%Stats').text = status
+
+func _count_preds(predicate: String, arity: int) -> int:
+	var args := Array()
+	args.resize(arity)
+	args.fill('_')
+	var res = pl.query_one('aggregate_all', ['count', '%s(%s)' % [predicate, ', '.join(args)], '_'])
+	return res['args'][2]
 
 func _popup_opened():
 	_overlay.show()
@@ -385,6 +467,7 @@ func close_overlay():
 		if _sched_ed.schedule != null:
 			_sched_ed.schedule.remove_from_db(pl)
 			_sched_ed.schedule.save_to_db(_pl_writer)
+			_queue_refresh_stats()
 			var sel_station := _selected_object as Station
 			if sel_station != null:
 				_refresh_stops(sel_station)
@@ -394,6 +477,7 @@ func close_overlay():
 func _remove_schedule():
 	_sched_ed.schedule.remove_from_db(pl)
 	_sched_ed.edit(null)
+	_queue_refresh_stats()
 	close_overlay()
 	if $ScheduleList.visible:
 		_refresh_schedules()
@@ -428,3 +512,21 @@ func _route_planner_transition(full_screen: bool):
 		_overlay.show()
 	else:
 		_overlay.hide()
+
+func _reveal_unused_objs():
+	_overlay.show()
+	var objs: Array[MapObject]
+	var stations: Array = pl.query_one(r'findall(S, (station(S), \+ (schedule_route(_, R), member(S, R))), Result)')['args'][2]
+	var roads: Array = pl.query_one(r'findall(road(A, B), (road(A, B, _), \+ (schedule_route(_, R), (nextto(A, B, R) ; nextto(B, A, R)))), Result)')['args'][2]
+	for st in stations:
+		objs.push_back(view.get_node(st))
+	for rd in roads:
+		var a: Station = view.get_node(rd['args'][0])
+		var b: Station = view.get_node(rd['args'][1])
+		objs.push_back(_get_road(a, b))
+	for obj in objs:
+		obj.set_state(MapObject.STATE_HOVERED, true)
+	_overlay.clicked.connect(func():
+		for obj in objs:
+			obj.set_state(MapObject.STATE_HOVERED, false)
+	, ConnectFlags.CONNECT_ONE_SHOT)

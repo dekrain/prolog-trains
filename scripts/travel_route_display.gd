@@ -1,6 +1,7 @@
 extends FoldableContainer
 
 @onready var _start_time: TimeLabel = %StartTime
+@onready var _end_time: TimeLabel = %EndTime
 @onready var _n_trains: Label = %NumTrains
 @onready var _score: Label = %Score
 @onready var _segments: VBoxContainer = %Segments
@@ -11,9 +12,11 @@ func _ready():
 	header.show()
 	add_title_bar_control(header)
 	_start_time.disable()
+	_end_time.disable()
 
 func setup(route: RoutePlanner.FoundRoute):
 	_start_time.set_time(route.start_time)
+	_end_time.set_time(route.end_time)
 	_n_trains.text = str(route.num_trains)
 	_score.text = String.num(route.score, 2)
 	for seg in route.path:
@@ -55,13 +58,14 @@ class SegmentDisplay extends ClickablePanel:
 		add_child(_hbox)
 
 	func setup_ride(ride: RoutePlanner.PathSegRide):
-		var pad := Control.new()
-		pad.custom_minimum_size.x = 50.0
-		_hbox.add_child(pad)
+		#var pad := Control.new()
+		#pad.custom_minimum_size.x = 50.0
+		#_hbox.add_child(pad)
 		var rd := RouteDisplay.new()
 		rd.path = [ride.from.name, ride.to.name]
 		rd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rd.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		rd.alignment = FlowContainer.ALIGNMENT_CENTER
 		_hbox.add_child(rd)
 		var sched := Label.new()
 		sched.text = ride.schedule.name

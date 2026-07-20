@@ -174,14 +174,16 @@ select_fw_rev(_F, R, 1, Res) :- !, Res = R.
 
 %! accumulate_timings(+Timings, +Offset, +Index, +Reverse, -Time) is det.
 accumulate_timings(Timings, Offset, Index, 0, Sum) :-
-	sum_prefix(Timings, Offset, Index, Sum).
+	sum_prefix(Timings, Offset, Index, SumR),
+	Sum is SumR mod 1440.
 
 accumulate_timings(Timings, Offset, Index, 1, Sum) :-
-	sum_suffix(Timings, Offset, Index, Sum).
+	sum_suffix(Timings, Offset, Index, SumR),
+	Sum is SumR mod 1440.
 
 sum_prefix(_, Acc, 0, Sum) :- !, Sum = Acc.
 sum_prefix([H|T], Acc, Count, Sum) :-
-	Cnext is Count - 1,
+	succ(Cnext, Count),
 	Anext is Acc + H,
 	sum_prefix(T, Anext, Cnext, Sum).
 
@@ -191,7 +193,7 @@ sum_suffix(Timings, Offset, Index, Sum) :-
 
 list_skip(L, 0, S) :- !, S = L.
 list_skip([_|T], N, S) :-
-	D is N - 1,
+	succ(D, N),
 	list_skip(T, D, S).
 
 schedule_route_fw_(S, T, I, P) :- schedule_route_fw_(S, T, 0, I, P).
@@ -201,11 +203,11 @@ schedule_route_fw_([S], [], A, 0, P) :-
 schedule_route_fw_([S|Ss], [T|Ts], A, 0, P) :-
 	!,
 	P = [stop(S, A)|Ps],
-	Ar is A + T,
+	time_delta(A, Ar, T),
 	schedule_route_fw_(Ss, Ts, Ar, 0, Ps).
 schedule_route_fw_([_|Ss], [T|Ts], A, I, P) :-
-	Ar is A + T,
-	Ir is I - 1,
+	time_delta(A, Ar, T),
+	succ(Ir, I),
 	schedule_route_fw_(Ss, Ts, Ar, Ir, P).
 
 schedule_route_rev_(S, T, I, P) :-
@@ -219,7 +221,7 @@ offset_stops([], _Offset, R) :- !, R = [].
 offset_stops([P|Ps], Offset, R) :-
 	P = stop(S, T),
 	!,
-	Tr is Offset + T,
+	time_delta(Offset, Tr, T),
 	R = [stop(S, Tr)|Rs],
 	offset_stops(Ps, Offset, Rs).
 
@@ -270,14 +272,20 @@ time_between(Start, End, Time) :-
 	Time >= Start).
 
 %! time_delta(+From, +To, -Delta) is det.
+%! time_delta(+From, -To, +Delta) is det.
 time_delta(From, To, Delta) :-
-	From =< To,
-	!,
-	Delta is To - From.
-
-time_delta(From, To, Delta) :-
-	% From > To
-	Delta is To + (1440 - From).
+	(	var(Delta)
+	->	(	From =< To
+		->	Delta is To - From
+		;	Delta is To + (1440 - From)
+		)
+	;	var(To)
+	->	Sum is From + Delta,
+		(	Sum < 1440
+		->	To = Sum
+		;	To is Sum - 1440
+		)
+	).
 
 assert_time(Time) :-
 	must_be(between(0, 1440), Time).

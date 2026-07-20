@@ -1,9 +1,5 @@
 class_name Station extends MapObject
 
-const OUTLINE_HOVER := Color.ANTIQUE_WHITE
-const OUTLINE_REMOVE := Color.CRIMSON
-const OUTLINE_SELECTED := Color.AQUAMARINE
-
 var polygon := Polygon2D.new()
 var outline := Polygon2D.new()
 var col := CollisionPolygon2D.new()
@@ -29,6 +25,7 @@ func apply(vbuf: PackedVector2Array, color: Color):
 	for idx in range(vbuf.size()):
 		vbuf[idx] *= 1.2
 	outline.polygon = vbuf
+	changed.emit()
 
 func generate():
 	var verts := randi_range(3, 6)
@@ -83,8 +80,8 @@ func load_from_db(pl: Prologot):
 	var shape := (res['args'][1] as PackedFloat32Array).to_byte_array().to_vector2_array()
 	apply(shape, color)
 
-func remove_from_db(pl: Prologot) -> bool:
-	if not _roads.is_empty():
+func remove_from_db(pl: Prologot, force: bool = false) -> bool:
+	if not force and not _roads.is_empty():
 		return false
 	pl.retract_all('station_xy(%s, _, _)' % [name])
 	pl.retract_all('station_color(%s, _, _, _)' % [name])

@@ -26,6 +26,19 @@ theme_type_variation = &"GridCell"
 script = ExtResource("3_irjim")
 metadata/_custom_type_script = "uid://b25na3251vrbe"
 
+[node name="Label3" type="Label" parent="HBoxContainer" unique_id=1622122401]
+layout_mode = 2
+text = "—"
+vertical_alignment = 1
+
+[node name="EndTime" type="PanelContainer" parent="HBoxContainer" unique_id=2120637793]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 2
+theme_type_variation = &"GridCell"
+script = ExtResource("3_irjim")
+metadata/_custom_type_script = "uid://b25na3251vrbe"
+
 [node name="Label" type="Label" parent="HBoxContainer" unique_id=89552435]
 layout_mode = 2
 text = "Trains:"

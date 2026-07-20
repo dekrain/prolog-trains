@@ -3,12 +3,8 @@ class_name Road extends MapObject
 const SB_ROAD := preload('res://resources/road.stylebox')
 const SB_OUTLINE := preload('res://resources/road_outline.tres')
 
-const ROAD_WIDTH := 5.0
+const ROAD_WIDTH := 2.0
 const MARGIN := 3.0
-
-const OUTLINE_HOVER := Color.ANTIQUE_WHITE
-const OUTLINE_REMOVE := Color.CRIMSON
-const OUTLINE_SELECTED := Color.AQUAMARINE
 
 var from: Station
 var to: Station
@@ -75,8 +71,8 @@ func load_from_db(pl: Prologot):
 	var res: Dictionary = pl.query_one('road', [from.name, to.name, '_'])
 	quality = res['args'][2]
 
-func remove_from_db(pl: Prologot) -> bool:
-	if pl.query('road_part_of_schedule', [from.name, to.name]):
+func remove_from_db(pl: Prologot, force: bool = false) -> bool:
+	if not force and pl.query('road_part_of_schedule', [from.name, to.name]):
 		return false
 	from._roads.erase(self)
 	to._roads.erase(self)

@@ -10,7 +10,7 @@ index 0000000..8175f7c
 +../godot-cpp
 \ No newline at end of file
 diff --git a/src/Prologot.cpp b/src/Prologot.cpp
-index 30c7345..bb851d2 100644
+index 30c7345..ef18e03 100644
 --- a/src/Prologot.cpp
 +++ b/src/Prologot.cpp
 @@ -9,6 +9,7 @@
@@ -26,7 +26,7 @@ index 30c7345..bb851d2 100644
  
  Prologot* Prologot::m_singleton = nullptr;
 +Ref<PrologotEngine> PrologotEngine::m_global_engine = nullptr;
-+thread_local Ref<PrologotEngine> PrologotEngine::t_current_engine;
++thread_local PrologotEngine* PrologotEngine::t_current_engine;
  
  // =============================================================================
  // Godot Method Binding
@@ -46,9 +46,9 @@ index 30c7345..bb851d2 100644
          return false;
      }
  
-+	// Store the global engine instance
-+	PrologotEngine::m_global_engine = memnew(PrologotEngine(PL_current_engine()));
-+	PrologotEngine::t_current_engine = PrologotEngine::m_global_engine;
++    // Store the global engine instance
++    PrologotEngine::m_global_engine = memnew(PrologotEngine(PL_current_engine()));
++    PrologotEngine::t_current_engine = PrologotEngine::m_global_engine.ptr();
 +
      // Log which SWI_HOME_DIR is being used by Prolog
      term_t home_term = PL_new_term_ref();
@@ -57,11 +57,46 @@ index 30c7345..bb851d2 100644
  {
      if (m_initialized)
      {
-+		PrologotEngine::m_global_engine = nullptr;
++        PrologotEngine::m_global_engine = nullptr;
          // PL_cleanup(0) shuts down the Prolog engine
          // The argument (0) means normal cleanup
          PL_cleanup(0);
-@@ -1476,3 +1487,60 @@ String Prologot::get_last_error() const
+@@ -1117,9 +1128,11 @@ Variant Prologot::term_to_variant(term_t p_term)
+ 
+     switch (type)
+     {
+-        case PL_VARIABLE:
+-            // Unbound variables cannot be converted to a concrete value
+-            return Variant();
++        case PL_VARIABLE: {
++            Dictionary var;
++            var["variable"] = "_";
++            return var;
++        }
+ 
+         case PL_ATOM:
+         {
+@@ -1135,8 +1148,10 @@ Variant Prologot::term_to_variant(term_t p_term)
+         {
+             // Convert Prolog integer to int64_t
+             int64_t i;
+-            if (!PL_get_int64(p_term, &i))
++            if (!PL_get_int64(p_term, &i)) {
++                push_error("Cannot retrieve int64 term");
+                 return Variant();
++            }
+             return i;
+         }
+ 
+@@ -1250,6 +1265,7 @@ Variant Prologot::term_to_variant(term_t p_term)
+     }
+ 
+     // Unknown or unsupported type
++    push_error(String("Unknown or unsupported term type: ")+String::num_int64(type), "warning");
+     return Variant();
+ }
+ 
+@@ -1476,3 +1492,60 @@ String Prologot::get_last_error() const
  {
      return m_last_error;
  }
@@ -81,49 +116,49 @@ index 30c7345..bb851d2 100644
 +}
 +
 +void PrologotEngine::set_active_for_this_thread() {
-+	PL_set_engine(m_engine, nullptr);
++    PL_set_engine(m_engine, nullptr);
 +}
 +
 +void PrologotEngine::deactivate() {
-+	PL_set_engine(nullptr, nullptr);
-+	if (t_current_engine.is_valid()) {
-+		t_current_engine = nullptr;
-+	}
++    PL_set_engine(nullptr, nullptr);
++    if (t_current_engine) {
++        t_current_engine = nullptr;
++    }
 +}
 +
 +Ref<PrologotEngine> PrologotEngine::get_current() {
-+	PL_engine_t eng = PL_current_engine();
-+	if (!eng)
-+		return nullptr;
-+	Ref<PrologotEngine> inst = t_current_engine;
-+	if (inst.is_valid() and inst->m_engine == eng)
-+		return inst;
-+	return nullptr;
++    PL_engine_t eng = PL_current_engine();
++    if (!eng)
++        return nullptr;
++    Ref<PrologotEngine> inst = t_current_engine;
++    if (inst.is_valid() and inst->m_engine == eng)
++        return inst;
++    return nullptr;
 +}
 +
 +PrologotEngine::PrologotEngine() {
-+	ERR_FAIL_COND_MSG(!Prologot::get_singleton() or !Prologot::get_singleton()->is_initialized(), "Prologot must be initialized");
++    ERR_FAIL_COND_MSG(!Prologot::get_singleton() or !Prologot::get_singleton()->is_initialized(), "Prologot must be initialized");
 +
-+	m_engine = PL_create_engine(nullptr);
-+	ERR_FAIL_NULL(m_engine);
++    m_engine = PL_create_engine(nullptr);
++    ERR_FAIL_NULL(m_engine);
 +}
 +
 +PrologotEngine::PrologotEngine(PL_engine_t eng) {
-+	m_engine = eng;
-+	ERR_FAIL_NULL(m_engine);
++    m_engine = eng;
++    ERR_FAIL_NULL(m_engine);
 +}
 +
 +PrologotEngine::~PrologotEngine() {
-+	if (t_current_engine == this) {
-+		deactivate();
-+	}
++    if (t_current_engine == this) {
++        deactivate();
++    }
 +
-+	if (m_engine) {
-+		PL_destroy_engine(m_engine);
-+	}
++    if (m_engine) {
++        PL_destroy_engine(m_engine);
++    }
 +}
 diff --git a/src/Prologot.hpp b/src/Prologot.hpp
-index cdef93d..7c6a8fa 100644
+index cdef93d..ad9fc60 100644
 --- a/src/Prologot.hpp
 +++ b/src/Prologot.hpp
 @@ -17,6 +17,8 @@
@@ -135,21 +170,22 @@ index cdef93d..7c6a8fa 100644
  using namespace godot;
  
  /**
-@@ -448,6 +450,11 @@ public:
+@@ -448,6 +450,12 @@ public:
       */
      Array list_predicates();
  
-+	/**
-+	 * @brief Get the global engine instance that's instantiated by default.
-+	 */
-+	PrologotEngine* get_global_engine();
++    /**
++     * @brief Get the global engine instance that's instantiated by default.
++     * Unimplemented currently.
++     */
++    PrologotEngine* get_global_engine();
 +
  protected:
  
      /**
 diff --git a/src/PrologotEngine.hpp b/src/PrologotEngine.hpp
 new file mode 100644
-index 0000000..b53e0eb
+index 0000000..a86507f
 --- /dev/null
 +++ b/src/PrologotEngine.hpp
 @@ -0,0 +1,64 @@
@@ -215,7 +251,7 @@ index 0000000..b53e0eb
 +	 */
 +	static Ref<PrologotEngine> m_global_engine;
 +
-+	static thread_local Ref<PrologotEngine> t_current_engine;
++	static thread_local PrologotEngine* t_current_engine;
 +};
 diff --git a/src/register_types.cpp b/src/register_types.cpp
 index cf6efa7..342da62 100644

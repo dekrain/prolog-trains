@@ -85,18 +85,12 @@ func _refresh_grid(which: Section):
 	Util.clear_children(grid)
 	var time_entries := plans.size() + 1
 	grid.columns = time_entries + 1
-	#var tl := TextureRect.new()
-	#tl.texture = clock_icon
-	#tl.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	#grid.add_child(_wrap_cell(tl))
-	#for idx in range(time_entries):
-	#	grid.add_child(_wrap_cell(Control.new()))
 	var offset := 0
 	for _stat in range(schedule.path.size()):
 		var stat := schedule.path.size() - _stat - 1 if reverse else _stat
 		var del := stat if reverse else _stat - 1
 		if _stat > 0 and del < schedule.timings.size():
-			offset += schedule.timings[del]
+			offset = Util.time_add(offset, schedule.timings[del])
 		var station := schedule.path[stat]
 		var label := Label.new()
 		label.label_settings = preload('res://resources/station_name.tres')
@@ -105,7 +99,7 @@ func _refresh_grid(which: Section):
 		for idx in range(time_entries):
 			if idx < plans.size():
 				var time := SchedTimeLabel.new()
-				time.set_time(offset + plans[idx])
+				time.set_time(Util.time_add(offset, plans[idx]))
 				if _stat == 0:
 					time.editor = self
 					time.section = which
@@ -134,7 +128,7 @@ func _on_remove():
 func _compute_timings():
 	if schedule == null:
 		return
-	var timings = pl.call_function('compute_route_timings', [schedule.name])
+	var timings = Util.pl_call_function(pl, 'compute_route_timings', [schedule.name])
 	schedule.timings = timings
 	var offs := schedule.path.size()
 	for idx in range(1, schedule.path.size()):

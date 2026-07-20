@@ -1,8 +1,14 @@
 class_name Schedule extends Resource
 
+enum LoadStage {
+	None,
+	Path,
+	Full,
+}
+
 @export var name: String
 @export var path_names: PackedStringArray
-var fully_loaded: bool = false
+var load_stage := LoadStage.None
 var path: Array[Station]
 var timings: PackedInt32Array
 var forward_plans: PackedInt32Array
@@ -38,9 +44,12 @@ func load_route(pl: Prologot, map: MapView):
 	path.resize(path_names.size())
 	for idx in range(path_names.size()):
 		path[idx] = map.get_node(path_names[idx]) as Station
+	if load_stage < LoadStage.Path:
+		load_stage = LoadStage.Path
 
 func load(pl: Prologot, map: MapView):
-	load_route(pl, map)
+	if load_stage < LoadStage.Path:
+		load_route(pl, map)
 	var res = pl.query_one('schedule_timings', [name, '_'])
 	if res != null:
 		timings = PackedInt32Array(res['args'][1])
@@ -61,7 +70,7 @@ func load(pl: Prologot, map: MapView):
 			push_warning('Invalid run for %s: %s to %s' % [name, from, to])
 	forward_plans.sort()
 	reverse_plans.sort()
-	fully_loaded = true
+	load_stage = LoadStage.Full
 
 func save_to_db(writer):
 	writer.term('schedule', name)
@@ -74,7 +83,7 @@ func save_to_db(writer):
 			writer.term('schedule_run', name, start, end, run)
 		for run in reverse_plans:
 			writer.term('schedule_run', name, end, start, run)
-	fully_loaded = true
+	load_stage = LoadStage.Full
 
 func remove_from_db(pl: Prologot):
 	pl.retract_all('schedule_route(%s, _)' % [name])

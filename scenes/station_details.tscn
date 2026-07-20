@@ -3,6 +3,7 @@
 [ext_resource type="StyleBox" uid="uid://bg4suhnwdohue" path="res://resources/ui_overlay.stylebox" id="1_1ikky"]
 [ext_resource type="Theme" uid="uid://05rb2yc2ox4x" path="res://resources/ui_theme.tres" id="1_i3sco"]
 [ext_resource type="LabelSettings" uid="uid://c6bkqce8bld3w" path="res://resources/station_name.tres" id="2_kxw4v"]
+[ext_resource type="Script" uid="uid://cx3yqbx651fhq" path="res://scripts/expanding_scroll_container.gd" id="4_xs2ct"]
 
 [node name="StationDetails" type="PanelContainer" unique_id=765042475]
 anchors_preset = 10
@@ -45,6 +46,14 @@ text = "X: # Y: #"
 layout_mode = 2
 text = "Schedule:"
 
-[node name="Schedule" type="VBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1892529783]
+[node name="ExpandingScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer" unique_id=399400666]
+layout_mode = 2
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
+script = ExtResource("4_xs2ct")
+max_size = Vector2(0, 300)
+metadata/_custom_type_script = "uid://cx3yqbx651fhq"
+
+[node name="Schedule" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ExpandingScrollContainer" unique_id=1892529783]
 unique_name_in_owner = true
 layout_mode = 2

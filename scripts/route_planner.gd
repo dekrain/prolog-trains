@@ -68,7 +68,9 @@ func _process_query_work():
 	var path: PackedStringArray = _route.path
 	var max: int = _max_results.value
 	_worker_engine.set_active_for_this_thread()
-	var result = pl.call_function('find_routes', [tfrom, tto, path as Array, max])
+	# Error handling can race.
+	# TODO: Move error state to PrologotEngine
+	var result = Util.pl_call_function(pl, 'find_routes', [tfrom, tto, path as Array, max])
 	PrologotEngine.deactivate()
 	_populate_results.call_deferred(result)
 
@@ -100,6 +102,7 @@ class FoundRoute extends RefCounted:
 	var path: Array[PathSegment]
 	var num_trains: int
 	var start_time: int
+	var end_time: int
 	var score: float
 
 class PathSegment extends RefCounted:
@@ -126,6 +129,7 @@ func _parse_route(route: Dictionary) -> FoundRoute:
 	var start = path.pop_back()
 	assert(start['functor'] == 'start')
 	result.start_time = start['args'][0]
+	result.end_time = result.start_time
 	result.num_trains = 1
 	var schedule_cache: Dictionary[String, Schedule]
 	while !path.is_empty():
@@ -139,12 +143,14 @@ func _parse_route(route: Dictionary) -> FoundRoute:
 				rseg.dt = seg.args[3]
 				rseg.cost = seg.args[4]
 				result.path.push_back(rseg)
+				result.end_time = Util.time_add(result.end_time, rseg.dt)
 			'wait':
 				var rseg := PathSegWait.new()
 				rseg.dt = seg.args[0]
 				rseg.cost = seg.args[1]
 				result.path.push_back(rseg)
 				result.num_trains += 1
+				result.end_time = Util.time_add(result.end_time, rseg.dt)
 			_:
 				push_error('Unknown path segment: ', seg.functor)
 	return result

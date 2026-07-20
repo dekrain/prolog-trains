@@ -8,6 +8,10 @@ const STATE_HOVERED_REMOVE := 4
 const STATE_HOVERED_ALL := 5
 const ALL_STATES := 7
 
+const OUTLINE_HOVER := Color.GOLD
+const OUTLINE_REMOVE := Color.CRIMSON
+const OUTLINE_SELECTED := Color.SPRING_GREEN
+
 signal changed
 
 var _state := 0
@@ -36,7 +40,7 @@ func save_to_db_all(writer)
 func load_from_db(pl: Prologot)
 
 @abstract
-func remove_from_db(pl: Prologot) -> bool
+func remove_from_db(pl: Prologot, force: bool = false) -> bool
 
 @abstract
 func _apply_state()
