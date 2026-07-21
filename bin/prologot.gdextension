@@ -1,0 +1,27 @@
+[configuration]
+entry_symbol = "prologot_library_init"
+compatibility_minimum = "4.2"
+reloadable = true
+
+[libraries]
+
+linux.debug.x86_64 = "linux/libprologot.linux.template_debug.x86_64.so"
+windows.debug.x86_64 = "windows/libprologot.windows.template_debug.x86_64.dll"
+
+[dependencies]
+
+linux.debug.x86_64 = {
+	"linux/libswipl.so.9": "",
+	"linux/libgmp.so.10": "",
+	"linux/libtinfo.so.6": "",
+	"linux/libz.so.1": "",
+	"linux/swipl": ""
+}
+windows.debug.x86_64 = {
+	"windows/libswipl.dll": "",
+	"windows/libgcc_s_seh-1.dll": "",
+	"windows/libwinpthread-1.dll": "",
+	"windows/libgmp-10.dll": "",
+	"windows/zlib1.dll": "",
+	"windows/swipl": ""
+}
