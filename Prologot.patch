@@ -1,6 +1,177 @@
 diff --git a/.gdignore b/.gdignore
 new file mode 100644
 index 0000000..e69de29
+diff --git a/SConstruct b/SConstruct
+index 9342831..8e00377 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -21,6 +21,9 @@ AddOption('--skip-build', dest='skip_build', action='store_true', default=False,
+ AddOption('--gdextension', dest='gdextension', type='string', default=None,
+           metavar='PATH', help='Generate prologot.gdextension by scanning bin/ in PATH')
+ 
++def get_platform(env):
++    return env['platform']
++
+ # ============================================================================
+ # Setup godot-cpp folder
+ # ============================================================================
+@@ -71,22 +74,32 @@ def find_or_setup_godot_cpp():
+ # Find SWI-Prolog
+ # ============================================================================
+ SWIPL_CANDIDATES = {
+-    'win32': [
++    'windows': [
+         r'C:\Program Files\swipl\bin\swipl.exe',
+         r'C:\Program Files (x86)\swipl\bin\swipl.exe',
+         'swipl',
+     ],
+ }
+ SWIPL_INSTALL_HINT = {
+-    'win32': 'choco install swi-prolog',
+-    'darwin': 'brew install swi-prolog',
++    'windows': 'choco install swi-prolog',
++    'macos': 'brew install swi-prolog',
+ }
+ 
+-def find_swipl():
++def find_swipl(env):
+     """Find SWI-Prolog via --dump-runtime-variables. Exit with install hint if not found."""
+-    for swipl_cmd in SWIPL_CANDIDATES.get(sys.platform, ['swipl']):
++    plat = get_platform(env)
++    if os.access(f'swipl-{plat}.vars', os.R_OK):
++        swipl = {}
++        with open(f'swipl-{plat}.vars', 'r') as f:
++            for line in f:
++                line = line.strip()
++                if '=' in line:
++                    key, val = line.split('=', 1)
++                    swipl[key] = val.strip('";')
++            return swipl
++    for swipl_cmd in SWIPL_CANDIDATES.get(plat, ['swipl']):
+         try:
+-            result = subprocess.run([swipl_cmd, '--dump-runtime-variables'],
++            result = subprocess.run(['wine', swipl_cmd, '--dump-runtime-variables'],
+                                     capture_output=True, text=True, check=True)
+             swipl = {}
+             for line in result.stdout.strip().split('\n'):
+@@ -98,7 +111,7 @@ def find_swipl():
+             continue
+ 
+     print("Error: SWI-Prolog not found!")
+-    hint = SWIPL_INSTALL_HINT.get(sys.platform, 'sudo apt-get install swi-prolog')
++    hint = SWIPL_INSTALL_HINT.get(get_platform(env), 'sudo apt-get install swi-prolog')
+     print(f"Install with: {hint}")
+     Exit(1)
+ 
+@@ -175,12 +188,12 @@ def copy_swipl_libraries_windows(plbase, bin_dir, copied_files):
+ # ============================================================================
+ # Copy SWI-Prolog Libraries (Unix and MacOS)
+ # ============================================================================
+-def copy_swipl_libraries_unix(swipl_lib, bin_dir, copied_files):
++def copy_swipl_libraries_unix(platform_name, swipl_lib, bin_dir, copied_files):
+     """Copy SWI-Prolog shared library on Unix/macOS."""
+     copy_shared_lib(swipl_lib, bin_dir, copied_files)
+ 
+     # On macOS, also copy as libswipl.dylib for linking
+-    if sys.platform == 'darwin' and swipl_lib.name != 'libswipl.dylib':
++    if platform_name == 'macos' and swipl_lib.name != 'libswipl.dylib':
+         base_dest = bin_dir / 'libswipl.dylib'
+         if base_dest.exists():
+             base_dest.chmod(0o666)
+@@ -191,18 +204,19 @@ def copy_swipl_libraries_unix(swipl_lib, bin_dir, copied_files):
+ # ============================================================================
+ # Copy SWI-Prolog Libraries (Windows, MacOS and Unix)
+ # ============================================================================
+-def copy_swipl_libraries(swipl, plbase):
++def copy_swipl_libraries(env, swipl, plbase):
+     """Copy the necessary SWI-Prolog libraries into the bin/<platform>/ directory."""
+-    platform_name = PLATFORM_NAMES.get(sys.platform, sys.platform)
++    #platform_name = PLATFORM_NAMES.get(get_platform(env), sys.platform)
++    platform_name = get_platform(env)
+     bin_dir = Path("bin") / platform_name
+     bin_dir.mkdir(parents=True, exist_ok=True)
+ 
+     copied_files = []
+-    if sys.platform == "win32":
++    if platform_name == "windows":
+         copy_swipl_libraries_windows(plbase, bin_dir, copied_files)
+     else:
+         swipl_lib = find_swipl_lib(swipl, plbase)
+-        copy_swipl_libraries_unix(swipl_lib, bin_dir, copied_files)
++        copy_swipl_libraries_unix(platform_name, swipl_lib, bin_dir, copied_files)
+ 
+     if not copied_files:
+         print("Error: No SWI-Prolog libraries copied")
+@@ -214,10 +228,11 @@ def copy_swipl_libraries(swipl, plbase):
+ # ============================================================================
+ # Copy SWI-Prolog Resources (boot.prc, library/, etc.)
+ # ============================================================================
+-def copy_swipl_resources(plbase, output_dir=None):
++def copy_swipl_resources(env, plbase, output_dir=None):
+     """Copy SWI-Prolog runtime resources (boot.prc, library/, lib/)."""
+     if not output_dir:
+-        platform_name = PLATFORM_NAMES.get(sys.platform, sys.platform)
++        #platform_name = PLATFORM_NAMES.get(get_platform(env), sys.platform)
++        platform_name = get_platform(env)
+         output_dir = Path("bin") / platform_name / "swipl"
+     output_dir = Path(output_dir)
+ 
+@@ -269,13 +284,20 @@ def configure_swipl(env, plbase):
+     if include_dir.exists():
+         env.Append(CPPPATH=[str(include_dir)])
+ 
+-    platform_name = PLATFORM_NAMES.get(sys.platform, sys.platform)
++    #platform_name = PLATFORM_NAMES.get(get_platform(env), sys.platform)
++    platform_name = get_platform(env)
+     env.Append(LIBPATH=[os.path.abspath(f'bin/{platform_name}')])
+     env.Append(LIBS=['swipl'])
+-    if sys.platform == 'darwin':
++    if platform_name == 'macos':
+         env.Append(LINKFLAGS=['-Wl,-rpath,@loader_path'])
+-    elif sys.platform != 'win32':
++    elif platform_name != 'windows':
+         env.Append(RPATH=['$$ORIGIN'])
++    # Hack: force link swipl's dependencies to load them from bin directory
++    if platform_name == 'linux':
++        libs = ['libgmp.so.10', 'libtinfo.so.6', 'libz.so.1']
++        libs = ','.join(os.path.abspath(f'bin/{platform_name}/{l}') for l in libs)
++        env.Append(LINKFLAGS=['-Wl,--no-as-needed,'+libs])
++        #env.Append(LINKFLAGS=['-Wl,--copy-dt-needed'])
+ 
+ # ============================================================================
+ # Create prologot.gdextension
+@@ -336,10 +358,11 @@ def create_gdextension_file(base_path=".", verbose=False):
+ # ============================================================================
+ def build_library(env):
+     """Build the Prologot library."""
+-    platform_name = PLATFORM_NAMES.get(sys.platform, sys.platform)
++    #platform_name = PLATFORM_NAMES.get(get_platform(env), sys.platform)
++    platform_name = get_platform(env)
+     platform_dir = f"bin/{platform_name}"
+ 
+-    if env["platform"] == "macos":
++    if platform_name == "macos":
+         lib_name = f"{platform_dir}/libprologot.{env['platform']}.{env['target']}.{env['arch']}"
+     else:
+         lib_name = f"{platform_dir}/libprologot{env['suffix']}{env['SHLIBSUFFIX']}"
+@@ -369,7 +392,7 @@ env = SConscript(f"{godot_cpp_dir}/SConstruct")
+ Default(None)  # Clear godot-cpp default targets
+ 
+ # Setup SWI-Prolog
+-swipl = find_swipl()
++swipl = find_swipl(env)
+ plbase = find_plbase(swipl)
+ 
+ # Configure and build
+@@ -378,5 +401,5 @@ configure_swipl(env, plbase)
+ build_library(env)
+ 
+ # Copy SWI-Prolog libraries and resources
+-copy_swipl_libraries(swipl, plbase)
+-copy_swipl_resources(plbase)
+\ No newline at end of file
++copy_swipl_libraries(env, swipl, plbase)
++copy_swipl_resources(env, plbase)
 diff --git a/godot-cpp-current b/godot-cpp-current
 new file mode 120000
 index 0000000..8175f7c
@@ -10,7 +181,7 @@ index 0000000..8175f7c
 +../godot-cpp
 \ No newline at end of file
 diff --git a/src/Prologot.cpp b/src/Prologot.cpp
-index 30c7345..ef18e03 100644
+index 30c7345..d08332f 100644
 --- a/src/Prologot.cpp
 +++ b/src/Prologot.cpp
 @@ -9,6 +9,7 @@
@@ -21,16 +192,40 @@ index 30c7345..ef18e03 100644
  #include <string>
  #include <vector>
  #ifdef _WIN32
-@@ -31,6 +32,8 @@
+@@ -26,11 +27,32 @@
+ #include <godot_cpp/core/class_db.hpp>
+ #include <godot_cpp/variant/utility_functions.hpp>
+ 
++// =============================================================================
++// Compat functions
++// =============================================================================
++
++#if PLVERSION < 100000
++// Polyfil
++static PL_engine_t PL_current_engine() {
++    PL_engine_t eng = nullptr;
++    int res = PL_set_engine(PL_ENGINE_CURRENT, &eng);
++    if (res != PL_ENGINE_SET) {
++        godot::UtilityFunctions::push_error(vformat("Querying engine failed: %d (%s)", res,
++            res == PL_ENGINE_INVAL ? "invalid" :
++            res == PL_ENGINE_INUSE ? "in use" :
++            "unknown error"));
++    }
++    return eng;
++}
++#endif
++
+ // =============================================================================
+ // Static Member Initialization
  // =============================================================================
  
  Prologot* Prologot::m_singleton = nullptr;
 +Ref<PrologotEngine> PrologotEngine::m_global_engine = nullptr;
-+thread_local PrologotEngine* PrologotEngine::t_current_engine;
++thread_local Ref<PrologotEngine> PrologotEngine::t_current_engine;
  
  // =============================================================================
  // Godot Method Binding
-@@ -307,7 +310,10 @@ bool Prologot::initialize(Dictionary const& p_options)
+@@ -307,7 +329,10 @@ bool Prologot::initialize(Dictionary const& p_options)
      argv_list.push_back(nullptr);
  
      // Initialize Prolog engine
@@ -42,61 +237,26 @@ index 30c7345..ef18e03 100644
      {
          if (!handle_prolog_exception(0, "PL_initialise"))
          {
-@@ -317,6 +323,10 @@ bool Prologot::initialize(Dictionary const& p_options)
+@@ -317,6 +342,10 @@ bool Prologot::initialize(Dictionary const& p_options)
          return false;
      }
  
-+    // Store the global engine instance
-+    PrologotEngine::m_global_engine = memnew(PrologotEngine(PL_current_engine()));
-+    PrologotEngine::t_current_engine = PrologotEngine::m_global_engine.ptr();
++	// Store the global engine instance
++	PrologotEngine::m_global_engine = memnew(PrologotEngine(PL_current_engine()));
++	PrologotEngine::t_current_engine = PrologotEngine::m_global_engine;
 +
      // Log which SWI_HOME_DIR is being used by Prolog
      term_t home_term = PL_new_term_ref();
      predicate_t flag_pred = PL_predicate("current_prolog_flag", 2, "system");
-@@ -432,6 +442,7 @@ void Prologot::cleanup()
+@@ -432,6 +461,7 @@ void Prologot::cleanup()
  {
      if (m_initialized)
      {
-+        PrologotEngine::m_global_engine = nullptr;
++		PrologotEngine::m_global_engine = nullptr;
          // PL_cleanup(0) shuts down the Prolog engine
          // The argument (0) means normal cleanup
          PL_cleanup(0);
-@@ -1117,9 +1128,11 @@ Variant Prologot::term_to_variant(term_t p_term)
- 
-     switch (type)
-     {
--        case PL_VARIABLE:
--            // Unbound variables cannot be converted to a concrete value
--            return Variant();
-+        case PL_VARIABLE: {
-+            Dictionary var;
-+            var["variable"] = "_";
-+            return var;
-+        }
- 
-         case PL_ATOM:
-         {
-@@ -1135,8 +1148,10 @@ Variant Prologot::term_to_variant(term_t p_term)
-         {
-             // Convert Prolog integer to int64_t
-             int64_t i;
--            if (!PL_get_int64(p_term, &i))
-+            if (!PL_get_int64(p_term, &i)) {
-+                push_error("Cannot retrieve int64 term");
-                 return Variant();
-+            }
-             return i;
-         }
- 
-@@ -1250,6 +1265,7 @@ Variant Prologot::term_to_variant(term_t p_term)
-     }
- 
-     // Unknown or unsupported type
-+    push_error(String("Unknown or unsupported term type: ")+String::num_int64(type), "warning");
-     return Variant();
- }
- 
-@@ -1476,3 +1492,60 @@ String Prologot::get_last_error() const
+@@ -1476,3 +1506,60 @@ String Prologot::get_last_error() const
  {
      return m_last_error;
  }
@@ -116,49 +276,49 @@ index 30c7345..ef18e03 100644
 +}
 +
 +void PrologotEngine::set_active_for_this_thread() {
-+    PL_set_engine(m_engine, nullptr);
++	PL_set_engine(m_engine, nullptr);
 +}
 +
 +void PrologotEngine::deactivate() {
-+    PL_set_engine(nullptr, nullptr);
-+    if (t_current_engine) {
-+        t_current_engine = nullptr;
-+    }
++	PL_set_engine(nullptr, nullptr);
++	if (t_current_engine.is_valid()) {
++		t_current_engine = nullptr;
++	}
 +}
 +
 +Ref<PrologotEngine> PrologotEngine::get_current() {
-+    PL_engine_t eng = PL_current_engine();
-+    if (!eng)
-+        return nullptr;
-+    Ref<PrologotEngine> inst = t_current_engine;
-+    if (inst.is_valid() and inst->m_engine == eng)
-+        return inst;
-+    return nullptr;
++	PL_engine_t eng = PL_current_engine();
++	if (!eng)
++		return nullptr;
++	Ref<PrologotEngine> inst = t_current_engine;
++	if (inst.is_valid() and inst->m_engine == eng)
++		return inst;
++	return nullptr;
 +}
 +
 +PrologotEngine::PrologotEngine() {
-+    ERR_FAIL_COND_MSG(!Prologot::get_singleton() or !Prologot::get_singleton()->is_initialized(), "Prologot must be initialized");
++	ERR_FAIL_COND_MSG(!Prologot::get_singleton() or !Prologot::get_singleton()->is_initialized(), "Prologot must be initialized");
 +
-+    m_engine = PL_create_engine(nullptr);
-+    ERR_FAIL_NULL(m_engine);
++	m_engine = PL_create_engine(nullptr);
++	ERR_FAIL_NULL(m_engine);
 +}
 +
 +PrologotEngine::PrologotEngine(PL_engine_t eng) {
-+    m_engine = eng;
-+    ERR_FAIL_NULL(m_engine);
++	m_engine = eng;
++	ERR_FAIL_NULL(m_engine);
 +}
 +
 +PrologotEngine::~PrologotEngine() {
-+    if (t_current_engine == this) {
-+        deactivate();
-+    }
++	if (t_current_engine == this) {
++		deactivate();
++	}
 +
-+    if (m_engine) {
-+        PL_destroy_engine(m_engine);
-+    }
++	if (m_engine) {
++		PL_destroy_engine(m_engine);
++	}
 +}
 diff --git a/src/Prologot.hpp b/src/Prologot.hpp
-index cdef93d..ad9fc60 100644
+index cdef93d..7c6a8fa 100644
 --- a/src/Prologot.hpp
 +++ b/src/Prologot.hpp
 @@ -17,6 +17,8 @@
@@ -170,22 +330,21 @@ index cdef93d..ad9fc60 100644
  using namespace godot;
  
  /**
-@@ -448,6 +450,12 @@ public:
+@@ -448,6 +450,11 @@ public:
       */
      Array list_predicates();
  
-+    /**
-+     * @brief Get the global engine instance that's instantiated by default.
-+     * Unimplemented currently.
-+     */
-+    PrologotEngine* get_global_engine();
++	/**
++	 * @brief Get the global engine instance that's instantiated by default.
++	 */
++	PrologotEngine* get_global_engine();
 +
  protected:
  
      /**
 diff --git a/src/PrologotEngine.hpp b/src/PrologotEngine.hpp
 new file mode 100644
-index 0000000..a86507f
+index 0000000..b53e0eb
 --- /dev/null
 +++ b/src/PrologotEngine.hpp
 @@ -0,0 +1,64 @@
@@ -251,7 +410,7 @@ index 0000000..a86507f
 +	 */
 +	static Ref<PrologotEngine> m_global_engine;
 +
-+	static thread_local PrologotEngine* t_current_engine;
++	static thread_local Ref<PrologotEngine> t_current_engine;
 +};
 diff --git a/src/register_types.cpp b/src/register_types.cpp
 index cf6efa7..342da62 100644
@@ -265,3 +424,21 @@ index cf6efa7..342da62 100644
  }
  
  /**
+diff --git a/swipl-windows.vars b/swipl-windows.vars
+new file mode 100644
+index 0000000..644ad67
+--- /dev/null
++++ b/swipl-windows.vars
+@@ -0,0 +1,12 @@
++PLBASE="c:/Program Files/swipl";
++SWIPL_PACK_PATH="";
++PLARCH="x64-win64";
++PLBITS="64";
++PLVERSION="100002";
++PLSOEXT="dll";
++PLSOPATH="PATH";
++PLLIBDIR="c:/Program Files/swipl/bin";
++PLLIB="-lswipl";
++PLLIBSWIPL="c:/Program Files/swipl/bin/libswipl.dll";
++PLSHARED="yes";
++PLTHREADS="yes";

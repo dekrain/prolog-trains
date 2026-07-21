@@ -30,7 +30,7 @@ const MARGIN := 20.0
 const TRANSITION_DUR := 0.9
 
 func _ready():
-	pl.initialize()
+	pl.initialize({ 'home': 'swipl' })
 	_pl_writer = preload('res://scripts/prolog_writer.gd').new(pl)
 	_sched_ed.pl = pl
 	$RoutePlanner.pl = pl

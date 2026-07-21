@@ -1,7 +1,7 @@
 @tool class_name EditorIcon extends Texture2D
 
-@export_tool_button('Pick icon')
-var __pick = pick_icon
+#@export_tool_button('Pick icon')
+#var __pick = pick_icon
 
 @export var icon: StringName:
 	get: return icon
@@ -16,7 +16,7 @@ static var _cleanup_queued := false
 static var _theme: Theme
 static func _static_init():
 	if Engine.is_editor_hint():
-		_theme = EditorInterface.get_editor_theme()
+		_theme = Engine.get_singleton(&'EditorInterface').get_editor_theme()
 	else:
 		_theme = load('res://icons.res')
 
@@ -73,28 +73,28 @@ func _has_alpha():
 func _icon_changed():
 	emit_changed()
 
-func pick_icon():
-	var theme := EditorInterface.get_editor_theme()
-	var icons := theme.get_icon_list(&'EditorIcons')
-	var dialog := Window.new()
-	dialog.title = 'Select icon'
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	dialog.add_child(panel)
-	var items := ItemList.new()
-	items.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	items.max_columns = 0
-	items.icon_mode = ItemList.ICON_MODE_TOP
-	items.same_column_width = true
-	items.fixed_icon_size = Vector2i(32, 32)
-	items.item_activated.connect(func(idx: int):
-		icon = icons[idx]
-		dialog.queue_free()
-	)
-	for icn in icons:
-		items.add_item(icn, theme.get_icon(icn, &'EditorIcons'))
-	panel.add_child(items)
-	dialog.close_requested.connect(dialog.queue_free)
-	EditorInterface.popup_dialog_centered(dialog, Vector2i(700, 400))
+#func pick_icon():
+	#var theme := EditorInterface.get_editor_theme()
+	#var icons := theme.get_icon_list(&'EditorIcons')
+	#var dialog := Window.new()
+	#dialog.title = 'Select icon'
+	#var panel := PanelContainer.new()
+	#panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	#panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	#panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	#dialog.add_child(panel)
+	#var items := ItemList.new()
+	#items.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	#items.max_columns = 0
+	#items.icon_mode = ItemList.ICON_MODE_TOP
+	#items.same_column_width = true
+	#items.fixed_icon_size = Vector2i(32, 32)
+	#items.item_activated.connect(func(idx: int):
+		#icon = icons[idx]
+		#dialog.queue_free()
+	#)
+	#for icn in icons:
+		#items.add_item(icn, theme.get_icon(icn, &'EditorIcons'))
+	#panel.add_child(items)
+	#dialog.close_requested.connect(dialog.queue_free)
+	#EditorInterface.popup_dialog_centered(dialog, Vector2i(700, 400))
