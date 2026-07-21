@@ -45,6 +45,12 @@ along with stop time. Clicking on an entry will open the editor for that schedul
 ![Stop list for a station](doc/station_stops.png)
 
 ## Installation
+You can try out the **EXPERIMENTAL** build on [releases](https://github.com/dekrain/prolog-trains/releases) page,
+otherwise you can build from source.
+
+## Building
+Requires Godot 4.x and SWI-prolog, in addition for build tools to build the C++ GDExtension.
+
 First clone the repo:
 ```sh
 $ git clone https://github.com/dekrain/prolog-trains.git --recurse-submodules
